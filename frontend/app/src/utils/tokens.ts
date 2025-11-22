@@ -49,27 +49,41 @@ export const tokensToNotes = (tokens: string, notesOffset: number) => {
 
   // Process events to create notes
   let currentTick = 0;
-  const activeNotes: Record<string, { start: number, velocity: number }> = {};
+  const activeNotes: Record<string, { start: number, velocity: number, isAbsolute: boolean }> = {};
+  let pendingStartTick: number | null = null;
+  let pendingEndTick: number | null = null;
 
   for (const event of events) {
     switch (event.type) {
       case 'TIME_SHIFT':
         currentTick += event.shift;
+        pendingStartTick = null;
+        pendingEndTick = null;
+        break;
+      case 'NOTE_START':
+        pendingStartTick = event.start;
+        break;
+      case 'NOTE_END':
+        pendingEndTick = event.end;
         break;
       case 'NOTE_ON':
-        activeNotes[event.note] = { start: currentTick, velocity: event.velocity };
+        const isAbsolute = pendingStartTick !== null;
+        const start = isAbsolute ? pendingStartTick! : currentTick;
+        activeNotes[event.note] = { start, velocity: event.velocity, isAbsolute };
         break;
       case 'NOTE_OFF':
         const active = activeNotes[event.note];
         if (active) {
-          const duration = currentTick - active.start;
           const noteNumber = pitchNameToMidi(event.note);
+          const finalStart = active.isAbsolute ? active.start : (notesOffset + active.start);
+          const finalEnd = pendingEndTick !== null ? pendingEndTick : (notesOffset + currentTick);
+          const duration = finalEnd - finalStart;
 
           notes.push({
             type: "channel",
             subtype: "note",
             noteNumber: noteNumber,
-            tick: notesOffset + active.start,
+            tick: finalStart,
             velocity: active.velocity,
             duration: duration
           })
@@ -83,47 +97,54 @@ export const tokensToNotes = (tokens: string, notesOffset: number) => {
   return notes
 }
 
-export function notesToTokens(notes: any) {
-  // --- Format header
+export function notesToTokens(notes: any[]) {
   const tokens: string[] = [];
+
   tokens.push("TEMPO 120");
   tokens.push("TIMEBASE 384");
-  tokens.push(""); // blank line after header
+  tokens.push("");
 
-  // Sort notes by tick (start time)
-  const sortedNotes = [...notes].sort((a, b) => a.tick - b.tick);
+  type Event = { tick: number, type: 'on' | 'off', note: any };
 
-  let lastTick = 0;
+  const events: Event[] = [];
 
-  for (const note of sortedNotes) {
-    const startTick = note.tick;
-    const endTick = note.tick + note.duration;
-    const velocity = note.velocity ?? 100;
-    const noteName = midiToPitchName(note.noteNumber ?? 60);
-
-    // TIME_SHIFT from last note end to start of this note
-    const delta = startTick - lastTick;
-    if (delta > 0) tokens.push(`TIME_SHIFT ${delta}`);
-
-    // NOTE_ON line
-    tokens.push(`NOTE_ON ${noteName} VELOCITY ${velocity}`);
-
-    tokens.push(`NOTE_START ${startTick}`);
-
-    // TIME_SHIFT for note duration
-    const dur = endTick - startTick;
-    tokens.push(`TIME_SHIFT ${dur}`);
-
-    tokens.push(`NOTE_END ${endTick}`);
-
-    // NOTE_OFF line
-    tokens.push(`NOTE_OFF ${noteName}`);
-
-    lastTick = endTick;
+  for (const note of notes) {
+    events.push({ tick: note.tick, type: 'on', note });
+    events.push({ tick: note.tick + note.duration, type: 'off', note });
   }
 
-  // Join for output, match spacing in @complete.txt
+  events.sort((a, b) => {
+    if (a.tick !== b.tick) return a.tick - b.tick;
+    if (a.type === 'off' && b.type === 'on') return -1;
+    if (a.type === 'on' && b.type === 'off') return 1;
+
+    return 0;
+  });
+
+  let currentTick = 0;
+
+  for (const event of events) {
+    const delta = event.tick - currentTick;
+
+    if (delta > 0) {
+      tokens.push(`TIME_SHIFT ${delta}`);
+      currentTick = event.tick;
+    }
+
+    const noteName = midiToPitchName(event.note.noteNumber ?? 60);
+    const velocity = event.note.velocity ?? 100;
+
+    if (event.type === 'on') {
+      tokens.push(`NOTE_START ${event.tick}`);
+      tokens.push(`NOTE_ON ${noteName} VELOCITY ${velocity}`);
+    } else {
+      tokens.push(`NOTE_END ${event.tick}`);
+      tokens.push(`NOTE_OFF ${noteName}`);
+    }
+  }
+
   const finalStr = tokens.join('\n');
+
   console.log(finalStr);
 
   return finalStr
