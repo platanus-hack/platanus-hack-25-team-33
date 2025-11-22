@@ -1,7 +1,7 @@
 import styled from "@emotion/styled"
 import { FC, PropsWithChildren, useCallback } from "react"
-import { useSetSong } from "../../actions"
-import { songFromFile } from "../../actions/file"
+import { tracksFromFile } from "../../actions/file"
+import { useHistory } from "../../hooks/useHistory"
 import { useSong } from "../../hooks/useSong"
 import { useLocalization } from "../../localize/useLocalization"
 
@@ -14,9 +14,9 @@ const Container = styled.div`
 `
 
 export const DropZone: FC<PropsWithChildren> = ({ children }) => {
-  const { isSaved } = useSong()
+  const { isSaved, addTrack } = useSong()
   const localized = useLocalization()
-  const setSong = useSetSong()
+  const { pushHistory } = useHistory()
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -30,11 +30,20 @@ export const DropZone: FC<PropsWithChildren> = ({ children }) => {
         return
       }
       if (isSaved || confirm(localized["confirm-open"])) {
-        const newSong = await songFromFile(file)
-        setSong(newSong)
+        const tracks = await tracksFromFile(file)
+
+        if (tracks.length === 0) {
+          alert("No tracks found in the MIDI file.")
+          return
+        }
+
+        pushHistory()
+        tracks.forEach((track) => {
+          addTrack(track)
+        })
       }
     },
-    [isSaved, setSong, localized],
+    [isSaved, addTrack, pushHistory, localized],
   )
 
   return (

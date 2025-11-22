@@ -1,6 +1,11 @@
 import { useToast } from "dialog-hooks"
 import { ChangeEvent, useCallback } from "react"
-import { useCreateSong, useOpenSong, useSaveSong } from "../actions"
+import {
+  useCreateSong,
+  useImportTracks,
+  // useOpenSong,
+  useSaveSong,
+} from "../actions"
 import { saveFile, saveFileAs, useOpenFile } from "../actions/file"
 import { useLocalization } from "../localize/useLocalization"
 import { useAutoSave } from "./useAutoSave"
@@ -11,9 +16,10 @@ export const useSongFile = () => {
   const toast = useToast()
   const localized = useLocalization()
   const createSong = useCreateSong()
-  const openSong = useOpenSong()
+  // const openSong = useOpenSong()
   const saveSong = useSaveSong()
   const openFile = useOpenFile()
+  const importTracks = useImportTracks()
   const { onUserExplicitAction } = useAutoSave()
 
   return {
@@ -25,7 +31,7 @@ export const useSongFile = () => {
     openSong: useCallback(async () => {
       try {
         if (isSaved || confirm(localized["confirm-open"])) {
-          await openFile()
+          await openFile(true) // Add tracks instead of replacing song
         }
       } catch (e) {
         toast.error((e as Error).message)
@@ -35,13 +41,13 @@ export const useSongFile = () => {
       async (e: ChangeEvent<HTMLInputElement>) => {
         try {
           if (isSaved || confirm(localized["confirm-new"])) {
-            await openSong(e.currentTarget)
+            await importTracks(e.currentTarget) // Add tracks instead of replacing song
           }
         } catch (e) {
           toast.error((e as Error).message)
         }
       },
-      [isSaved, localized, openSong, toast],
+      [isSaved, localized, importTracks, toast],
     ),
     saveSong: useCallback(async () => {
       await saveFile(getSong())

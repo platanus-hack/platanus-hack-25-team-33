@@ -1,5 +1,7 @@
-import { Song, songFromMidi, songToMidi } from "@signal-app/core"
+import { Song, songFromMidi, songToMidi, Track } from "@signal-app/core"
 import { basename } from "../helpers/path"
+import { useHistory } from "../hooks/useHistory"
+import { useSong } from "../hooks/useSong"
 import { writeFile } from "../services/fs-helper"
 import { useSetSong } from "./song"
 
@@ -14,8 +16,10 @@ export const hasFSAccess =
 
 export const useOpenFile = () => {
   const setSong = useSetSong()
+  const { addTrack } = useSong()
+  const { pushHistory } = useHistory()
 
-  return async () => {
+  return async (addToExistingSong: boolean = false) => {
     let fileHandle: FileSystemFileHandle
     try {
       fileHandle = (
@@ -37,11 +41,51 @@ export const useOpenFile = () => {
       alert(msg)
       return
     }
+
     const file = await fileHandle.getFile()
-    const song = await songFromFile(file)
-    song.fileHandle = fileHandle
-    setSong(song)
+
+    if (addToExistingSong) {
+      const tracks = await tracksFromFile(file)
+
+      if (tracks.length === 0) {
+        alert("No tracks found in the MIDI file.")
+        return
+      }
+
+      pushHistory()
+      tracks.forEach((track) => {
+        addTrack(track)
+      })
+    } else {
+      const song = await songFromFile(file)
+      song.fileHandle = fileHandle
+      setSong(song)
+    }
   }
+}
+
+export const useAddTracksFromFile = () => {
+  const openFile = useOpenFile()
+
+  return async () => {
+    await openFile(true)
+  }
+}
+
+export const tracksFromFile = async (file: File): Promise<Track[]> => {
+  const song = await songFromFile(file)
+  // Return only non-conductor tracks to avoid duplicating conductor track
+  return song.tracks.filter((track) => !track.isConductorTrack)
+}
+
+export const tracksFromArrayBuffer = (
+  content: ArrayBuffer,
+  filePath?: string,
+  name?: string,
+): Track[] => {
+  const song = songFromArrayBuffer(content, filePath, name)
+  // Return only non-conductor tracks to avoid duplicating conductor track
+  return song.tracks.filter((track) => !track.isConductorTrack)
 }
 
 export const songFromFile = async (file: File) =>

@@ -6,10 +6,11 @@ import ArrowDownward from "mdi-react/ArrowDownwardIcon"
 import ArrowDropDown from "mdi-react/ArrowDropDownIcon"
 import ArrowUpward from "mdi-react/ArrowUpwardIcon"
 import { FC, useEffect } from "react"
-import { useSetSong } from "../../actions"
 import { useLoadSong } from "../../actions/cloudSong"
 import { useCloudFile } from "../../hooks/useCloudFile"
+import { useHistory } from "../../hooks/useHistory"
 import { useRootView } from "../../hooks/useRootView"
+import { useSong } from "../../hooks/useSong"
 import { Localized, useLocalization } from "../../localize/useLocalization"
 import { CircularProgress } from "../ui/CircularProgress"
 import { IconButton } from "../ui/IconButton"
@@ -87,7 +88,8 @@ export const CloudFileList = () => {
     setSortAscending,
   } = useCloudFile()
   const { setOpenCloudFileDialog } = useRootView()
-  const setSong = useSetSong()
+  const { addTrack } = useSong()
+  const { pushHistory } = useHistory()
   const loadSong = useLoadSong()
   const toast = useToast()
   const theme = useTheme()
@@ -101,7 +103,18 @@ export const CloudFileList = () => {
   const onClickSong = async (song: CloudSong) => {
     try {
       const midiSong = await loadSong(song)
-      setSong(midiSong)
+      // Add tracks from the loaded song instead of replacing the entire song
+      const tracks = midiSong.tracks.filter((track) => !track.isConductorTrack)
+
+      if (tracks.length === 0) {
+        alert("No tracks found in the selected song.")
+        return
+      }
+
+      pushHistory()
+      tracks.forEach((track) => {
+        addTrack(track)
+      })
       setOpenCloudFileDialog(false)
     } catch (e) {
       toast.error((e as Error).message)

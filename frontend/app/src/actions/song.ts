@@ -15,7 +15,7 @@ import { useSong } from "../hooks/useSong"
 import { useTrackList } from "../hooks/useTrackList"
 import { useTrackMute } from "../hooks/useTrackMute"
 import { downloadSongAsMidi } from "../midi/downloadSongAsMidi"
-import { songFromFile } from "./file"
+import { songFromFile, tracksFromFile } from "./file"
 
 const openSongFile = async (input: HTMLInputElement): Promise<Song | null> => {
   if (input.files === null || input.files.length === 0) {
@@ -119,6 +119,35 @@ export const useOpenSong = () => {
       setSong(song)
     },
     [setSong, onUserExplicitAction],
+  )
+}
+
+export const useImportTracks = () => {
+  const { addTrack } = useSong()
+  const { pushHistory } = useHistory()
+  const { onUserExplicitAction } = useAutoSave()
+
+  return useCallback(
+    async (input: HTMLInputElement) => {
+      if (input.files === null || input.files.length === 0) {
+        return
+      }
+
+      const file = input.files[0]
+      const tracks = await tracksFromFile(file)
+
+      if (tracks.length === 0) {
+        alert("No tracks found in the MIDI file.")
+        return
+      }
+
+      onUserExplicitAction()
+      pushHistory()
+      tracks.forEach((track) => {
+        addTrack(track)
+      })
+    },
+    [addTrack, pushHistory, onUserExplicitAction],
   )
 }
 

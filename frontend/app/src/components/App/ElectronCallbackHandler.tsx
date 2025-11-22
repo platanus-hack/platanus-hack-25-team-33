@@ -19,7 +19,7 @@ import {
   useSetSong,
   useTransposeSelection,
 } from "../../actions"
-import { songFromArrayBuffer } from "../../actions/file"
+import { songFromArrayBuffer, tracksFromArrayBuffer } from "../../actions/file"
 import {
   useCopySelectionGlobal,
   useCutSelectionGlobal,
@@ -37,7 +37,8 @@ import { useLocalization } from "../../localize/useLocalization"
 import { ElectronCallback } from "./ElectronCallback"
 
 export const ElectronCallbackHandler: FC = () => {
-  const { isSaved, filepath, getSong, setSaved, setFilepath } = useSong()
+  const { isSaved, filepath, getSong, setSaved, setFilepath, addTrack } =
+    useSong()
   const { isLoggedIn } = useAuth()
   const { setOpenSettingDialog, setOpenHelpDialog } = useRootView()
   const { setOpenTransposeDialog, setOpenVelocityDialog } = usePianoRoll()
@@ -46,6 +47,7 @@ export const ElectronCallbackHandler: FC = () => {
   const cloudSongFile = useCloudFile()
   const toast = useToast()
   const cutSelectionGlobal = useCutSelectionGlobal()
+  const { pushHistory } = useHistory()
   const copySelectionGlobal = useCopySelectionGlobal()
   const pasteSelectionGlobal = usePasteSelectionGlobal()
   const deleteSelection = useDeleteSelection()
@@ -96,8 +98,17 @@ export const ElectronCallbackHandler: FC = () => {
                 return // canceled
               }
               const { path, content } = res
-              const song = songFromArrayBuffer(content, path)
-              setSong(song)
+              const tracks = tracksFromArrayBuffer(content, path)
+
+              if (tracks.length === 0) {
+                alert("No tracks found in the MIDI file.")
+                return
+              }
+
+              pushHistory()
+              tracks.forEach((track) => {
+                addTrack(track)
+              })
               window.electronAPI.addRecentDocument(path)
             }
           } catch (e) {

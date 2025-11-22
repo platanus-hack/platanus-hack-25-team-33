@@ -4,7 +4,7 @@ import { useDialog, useProgress, usePrompt, useToast } from "dialog-hooks"
 import { atom, useAtomValue, useSetAtom } from "jotai"
 import { orderBy } from "lodash"
 import { ChangeEvent } from "react"
-import { useOpenSong, useSaveSong, useSetSong } from "../actions"
+import { useImportTracks, useSaveSong, useSetSong } from "../actions"
 import { useCreateSong, useUpdateSong } from "../actions/cloudSong"
 import { hasFSAccess, saveFileAs, useOpenFile } from "../actions/file"
 import { useLocalization } from "../localize/useLocalization"
@@ -26,9 +26,9 @@ export const useCloudFile = () => {
   const { show: showProgress } = useProgress()
   const localized = useLocalization()
   const setSong = useSetSong()
-  const openSong = useOpenSong()
   const saveSong = useSaveSong()
   const openFile = useOpenFile()
+  const importTracks = useImportTracks()
   const updateSong = useUpdateSong()
   const createSong = useCreateSong()
   const { onUserExplicitAction } = useAutoSave()
@@ -189,7 +189,7 @@ export const useCloudFile = () => {
         if (!(await saveIfNeeded())) {
           return
         }
-        await openFile()
+        await openFile(true) // Add tracks to existing song instead of replacing
         await saveOrCreateSong()
       } catch (e) {
         toast.error((e as Error).message)
@@ -197,7 +197,10 @@ export const useCloudFile = () => {
     },
     async importSongLegacy(e: ChangeEvent<HTMLInputElement>) {
       try {
-        await openSong(e.currentTarget)
+        if (!(await saveIfNeeded())) {
+          return
+        }
+        await importTracks(e.currentTarget)
         await saveOrCreateSong()
       } catch (e) {
         toast.error((e as Error).message)
