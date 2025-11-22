@@ -1,6 +1,7 @@
 import { useCallback } from "react"
 import { useSong } from "../hooks/useSong"
 import { completeMidi, getMidiResponse } from "../services/AiService";
+import { isNoteEvent, NoteEvent } from "@signal-app/core";
 
 // Helper to convert MIDI number to pitch name, e.g. 60 → C4
 function midiToPitchName(n: number): string {
@@ -20,9 +21,7 @@ export const useGenerateNotes = () => {
     if (!currentTrack) return;
 
     // Select MIDI notes on this track
-    const notes: any[] = currentTrack.events.filter(
-      (event) => event.type === "channel" && event.subtype === "note"
-    );
+    const notes = currentTrack.events.filter(isNoteEvent);
 
     // --- Format header
     const tokens: string[] = [];
@@ -39,7 +38,7 @@ export const useGenerateNotes = () => {
       const startTick = note.tick;
       const endTick = note.tick + note.duration;
       const velocity = note.velocity ?? 100;
-      const noteName = midiToPitchName(note.pitch ?? note.noteNumber ?? 60);
+      const noteName = midiToPitchName(note.noteNumber ?? 60);
 
       // TIME_SHIFT from last note end to start of this note
       const delta = startTick - lastTick;
@@ -62,8 +61,6 @@ export const useGenerateNotes = () => {
     const finalStr = tokens.join('\n');
     console.log(finalStr);
 
-
-
     const resultStr = await completeMidi(finalStr);
     console.log(resultStr);
 
@@ -81,6 +78,7 @@ export const useGenerateNotes = () => {
 async function checkResponseReady(id: string, currentTrack: any) {
   const result = await getMidiResponse(id);
   console.log(result);
+
   if (result.status === "completed") {
     console.log(result.tokens);
 
@@ -88,7 +86,7 @@ async function checkResponseReady(id: string, currentTrack: any) {
     // This will convert tokens (string) to an array of events.
     // Each line of tokens is a single event in the format described.
     const tokenLines = result.tokens.split('\n').map((line: string) => line.trim()).filter(Boolean);
-    const events = [];
+    const events: any[] = [];
     for (const line of tokenLines) {
       // Example event formats:
       // - TEMPO 120
@@ -98,6 +96,7 @@ async function checkResponseReady(id: string, currentTrack: any) {
       // - NOTE_END 1200
       // - TIME_SHIFT 480
       // - NOTE_OFF C4
+
       const parts = line.split(' ');
       switch (parts[0]) {
         case 'TEMPO':
@@ -107,10 +106,10 @@ async function checkResponseReady(id: string, currentTrack: any) {
           events.push({ type: 'TIMEBASE', timebase: Number(parts[1]) });
           break;
         case 'NOTE_ON':
-          events.push({ 
-            type: 'NOTE_ON', 
-            note: parts[1], 
-            velocity: Number(parts[3]) 
+          events.push({
+            type: 'NOTE_ON',
+            note: parts[1],
+            velocity: Number(parts[3])
           });
           break;
         case 'NOTE_START':
@@ -132,15 +131,70 @@ async function checkResponseReady(id: string, currentTrack: any) {
     }
     console.log("Events:", events);
 
-    // INSERT_YOUR_CODE
-    if (Array.isArray(currentTrack?.events)) {
-      currentTrack.events.push(...events);
+    let lastNoteEnd = 0;
+
+    if (currentTrack && Array.isArray(currentTrack.events)) {
+      for (const event of currentTrack.events) {
+        if (isNoteEvent(event)) {
+          const end = event.tick + event.duration;
+          if (end > lastNoteEnd) {
+            lastNoteEnd = end;
+          }
+        }
+      }
     }
 
+    // Process events to create notes
+    let currentTick = 0;
+    const activeNotes: Record<string, { start: number, velocity: number }> = {};
+
+    for (const event of events) {
+      switch (event.type) {
+        case 'TIME_SHIFT':
+          currentTick += event.shift;
+          break;
+        case 'NOTE_ON':
+          activeNotes[event.note] = { start: currentTick, velocity: event.velocity };
+          break;
+        case 'NOTE_OFF':
+          const active = activeNotes[event.note];
+          if (active) {
+            const duration = currentTick - active.start;
+            const noteNumber = pitchNameToMidi(event.note);
+
+            if (currentTrack && typeof currentTrack.addEvent === 'function') {
+              currentTrack.addEvent({
+                type: "channel",
+                subtype: "note",
+                noteNumber: noteNumber,
+                tick: lastNoteEnd + active.start,
+                velocity: active.velocity,
+                duration: duration
+              });
+            }
+
+            delete activeNotes[event.note];
+          }
+          break;
+      }
+    }
 
     return result.tokens;
   }
   setTimeout(() => {
     checkResponseReady(id, currentTrack);
   }, 1000);
+}
+
+function pitchNameToMidi(pitch: string): number {
+  const noteToNum: Record<string, number> = {
+    "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3,
+    "E": 4, "F": 5, "F#": 6, "Gb": 6, "G": 7, "G#": 8, "Ab": 8,
+    "A": 9, "A#": 10, "Bb": 10, "B": 11
+  };
+  const match = pitch.match(/^([A-G][#b]?)(-?\d+)$/);
+  if (!match) return 60;
+  const note = match[1];
+  const octave = parseInt(match[2], 10);
+  return (octave + 1) * 12 + (noteToNum[note] || 0);
 }
