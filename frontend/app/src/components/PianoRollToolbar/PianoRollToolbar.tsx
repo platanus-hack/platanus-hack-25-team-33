@@ -11,6 +11,7 @@ import { PanSlider } from "./PanSlider"
 import { PianoRollToolSelector } from "./PianoRollToolSelector"
 import { TrackNameInput } from "./TrackNameInput"
 import { VolumeSlider } from "./VolumeSlider"
+import { GenerativeAIMenu } from "./GenerativeAIMenu"
 
 const Spacer = styled.div`
   width: 1rem;
@@ -44,6 +45,10 @@ export const PianoRollToolbar: FC = () => {
       <QuantizeSelector />
 
       <AutoScrollButton />
+
+      <FlexibleSpacer />
+
+      <GenerativeAIMenu />
     </Toolbar>
   )
 }

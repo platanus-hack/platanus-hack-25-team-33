@@ -3,6 +3,7 @@ import { FC } from "react"
 import { useTrackList } from "../../hooks/useTrackList"
 import { DraggableList } from "../DraggableList/DraggableList"
 import { AddTrackButton } from "./AddTrackButton"
+import { GenerateTrackButton } from "./GenerateTrackButton"
 import { TrackListItem } from "./TrackListItem"
 
 const List = styled.div`
@@ -24,6 +25,8 @@ export const TrackList: FC = () => {
         render={(trackId) => <TrackListItem key={trackId} trackId={trackId} />}
       ></DraggableList>
       <AddTrackButton />
+
+      <GenerateTrackButton />
     </List>
   )
 }
