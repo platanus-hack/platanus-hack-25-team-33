@@ -111,10 +111,16 @@ ${prompt}
     console.log(
       'Took ' + timeInMinutes.toFixed(2) + ' minutes to generate the response.',
     );
+
     let parsedResponse: MidiResponse;
 
     try {
-      parsedResponse = JSON.parse(response) as MidiResponse;
+      parsedResponse = JSON.parse(
+        response
+          .replace(/\\n/g, '\n') // Replace escaped newlines (\n) with actual newlines
+          .replace(/(\n)(?=(?!.*"tokens":))/g, ' ') // Remove newlines outside the tokens field
+          .trim(),
+      ) as MidiResponse;
     } catch (error) {
       console.error('Error parsing response:', error);
       return; // Exit if JSON parsing fails
