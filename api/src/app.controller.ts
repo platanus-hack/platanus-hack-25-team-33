@@ -9,14 +9,14 @@ export class AppController {
   completeMidi(
     @Body()
     body: {
-      midiPath: string;
+      tokens: string;
       timebase: number;
       model?: string;
       measure?: number;
     },
   ): void {
-    const { midiPath, timebase, model, measure } = body;
-    this.appService.completeMidi(midiPath, timebase, model,measure);
+    const { tokens, timebase, model, measure } = body;
+    this.appService.completeMidi(tokens, timebase, model, measure);
   }
 
   @Post('generateMidi')

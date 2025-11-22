@@ -7,17 +7,12 @@ export class AppService {
   constructor(private readonly midiTokenProcessor: MidiTokenProcessor) {}
 
   async completeMidi(
-    midiPath: string,
+    tokens: string,
     timebase: number,
     model?: string,
     measure?: number,
   ): Promise<void> {
     const createResponse = new CreateResponseCommand();
-
-    const inputTokens = this.midiTokenProcessor.midiToTokens(
-      midiPath,
-      timebase,
-    );
 
     const instructions = `Please extend the piece with additional notes, ensuring that the rhythmic structure is varied and the harmony and progression stay consistent with the key and mode of the original piece. The melody should flow naturally and maintain musical cohesion with the existing material.
 
@@ -39,7 +34,7 @@ Please provide the extended music in the same token format:
     const before = Date.now();
     const response = await createResponse.execute({
       model: model || 'gpt-5-nano',
-      input: inputTokens,
+      input: tokens,
       instructions,
     });
 
