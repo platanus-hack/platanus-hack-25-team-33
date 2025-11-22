@@ -33,14 +33,13 @@ Please follow these instructions when completing the piece:
 ---
 
 ### **Response Format**:
-Please format your response in the following **JSON structure**, **ONLY** respond with this JSON where "\n" should ONLY appear in the tokens field and nowhere else:
+Please format your response in the following **JSON structure**, **ONLY** respond with this JSON:
 
 {
   "explanation": "[Your detailed explanation of the decisions you made, including harmonic choices, rhythmic structure, and any relevant context. Be detailed about your choices, for example, why you chose specific chords or notes.]",
-  "tokens": "TEMPO [bpm]\nTIMEBASE [timebase]\nNOTE_ON [note]\nVELOCITY [velocity]\nNOTE_START [startTime]\nNOTE_END [endTime]\nNOTE_OFF [note]"
+  "tokens": "TEMPO [bpm],TIMEBASE [timebase],NOTE_ON [note],VELOCITY [velocity],NOTE_START [startTime],NOTE_END [endTime],NOTE_OFF [note]"
 }
-
-Important: \\n should appear only in the tokens field to maintain proper formatting.`;
+`;
   }
 
   getGenerateMidiPrompt() {
