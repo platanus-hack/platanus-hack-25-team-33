@@ -6,9 +6,17 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Post('completeMidi')
-  completeMidi(@Body() body: { tokens: string; timebase: number }): void {
-    const { tokens, timebase } = body;
-    this.appService.completeMidi(tokens, timebase);
+  completeMidi(
+    @Body()
+    body: {
+      midiPath: string;
+      timebase: number;
+      model?: string;
+      measure?: number;
+    },
+  ): void {
+    const { midiPath, timebase, model, measure } = body;
+    this.appService.completeMidi(midiPath, timebase, model,measure);
   }
 
   @Post('generateMidi')

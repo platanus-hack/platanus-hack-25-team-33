@@ -6,30 +6,48 @@ import { CreateResponseCommand } from './commands/create-response.command';
 export class AppService {
   constructor(private readonly midiTokenProcessor: MidiTokenProcessor) {}
 
-  async completeMidi(tokens: string, timebase: number): Promise<void> {
+  async completeMidi(
+    midiPath: string,
+    timebase: number,
+    model?: string,
+    measure?: number,
+  ): Promise<void> {
     const createResponse = new CreateResponseCommand();
 
-    const instructions = `You are an AI music composer. The input below consists of a series of MIDI events, including tempo, note events, start times, and velocities. Your task is to "complete" the music while maintaining the rhythm, scale, mode, and musical consistency based on the given data. Ensure the melody flows naturally, respecting the existing patterns and structure. Extend the piece with new notes, rhythms, and harmonic progressions that fit within the existing context.
+    const inputTokens = this.midiTokenProcessor.midiToTokens(
+      midiPath,
+      timebase,
+    );
 
-    Please extend the piece with additional notes, maintaining the rhythmic structure, and ensuring the harmony and progression stay consistent with the key and mode of the original piece. Ensure the music feels complete and flows naturally with the existing material.
+    const instructions = `Please extend the piece with additional notes, ensuring that the rhythmic structure is varied and the harmony and progression stay consistent with the key and mode of the original piece. The melody should flow naturally and maintain musical cohesion with the existing material.
 
-    Provide the extended music in the same token format:
-    - TEMPO [bpm]
-    - TIMEBASE [timebase]
-    - NOTE_ON [note] VELOCITY [velocity]
-    - NOTE_START [startTime]
-    - NOTE_END [endTime]
-    - TIME_SHIFT [shiftTime]
-    - NOTE_OFF [note]`;
+### Specific Instructions:
+1. **Note Duration Variety**: The duration of the notes should vary significantly. Avoid making all the notes the same duration. Include a variety of note lengths such as **eighth notes**, **quarter notes**, **half notes**, **dotted rhythms**, and even **longer note durations** (whole notes). Do not generate notes with the same fixed distance between them (e.g., don't make all the notes 0.5 apart).
+2. **Irregular Timing**: Ensure that the timing between notes (note start and end) varies. There should be **a natural variety** in the spacing between notes to give the piece a dynamic and expressive feel. Some notes can be closely spaced, while others should be further apart.
+3. **Phrasing and Rhythm**: The rhythm should feel natural, with **syncopation**, **rests**, and **dynamic phrasing**. The note durations should not follow a fixed, repetitive pattern (such as every note being a quarter note or every note spaced the same).
+4. **Number of Compasses**: Extend the music to complete **${measure || 1} compasses** (measures) of music. Ensure that the extension feels like a seamless continuation of the existing material, with appropriate harmonic progressions and melodic movement.
 
+Please provide the extended music in the same token format:
+- TEMPO [bpm]
+- TIMEBASE [timebase]
+- NOTE_ON [note] VELOCITY [velocity]
+- NOTE_START [startTime]
+- NOTE_END [endTime]
+- TIME_SHIFT [shiftTime]
+- NOTE_OFF [note]`;
 
+    const before = Date.now();
     const response = await createResponse.execute({
-      model: 'gpt-5-nano',
-      input: tokens,
+      model: model || 'gpt-5-nano',
+      input: inputTokens,
       instructions,
     });
 
-    console.log('RESPONSE: ' + response);
+    const timeInMinutes = (Date.now() - before) / 60000;
+    console.log(
+      'Took ' + timeInMinutes.toFixed(2) + ' minutes to generate the response.',
+    );
+
     return this.midiTokenProcessor.processMidiFile(response);
   }
 
@@ -66,7 +84,6 @@ Rules:
       instructions,
     });
 
-    console.log('RESPONSE: ' + response);
     return this.midiTokenProcessor.processMidiFile(response);
   }
 }
