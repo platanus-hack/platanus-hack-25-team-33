@@ -188,7 +188,6 @@ export class MidiTokenProcessor {
     inputTokens: string,
     outputFile: string = 'output.mid',
   ): void {
-
     // Parse the tokens to get bpm and events
     const {
       bpm,
