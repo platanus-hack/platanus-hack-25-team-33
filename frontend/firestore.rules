@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /songs/{songId} {
+      allow read: if (request.auth != null && request.auth.uid == resource.data.userId) || resource.data.isPublic;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.userId 
+        && request.auth.uid == request.resource.data.userId 
+        && request.resource.data.createdAt == resource.data.createdAt 
+        && (!request.resource.data.keys().hasAny(["playCount"]) || request.resource.data.playCount == resource.data.playCount);
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId 
+        && (!request.resource.data.keys().hasAny(["playCount"]) || request.resource.data.playCount == 0);
+
+      // increment playCount
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(["playCount"])
+        && resource.data.keys().hasAny(["playCount"]) ? request.resource.data.playCount == resource.data.playCount + 1 : request.resource.data.playCount == 1;
+    }
+    match /songData/{songDataId} {
+      allow read: if (request.auth != null && request.auth.uid == resource.data.userId) || resource.data.isPublic;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId && request.resource.data.createdAt == resource.data.createdAt;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    match /midis/{midiId} {
+      allow read: if true
+      allow write: if false
+    }
+    match /users/{userId} {
+      allow read: if true;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId && request.resource.data.createdAt == resource.data.createdAt;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

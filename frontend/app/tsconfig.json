@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "types": [
+      "node",
+      "jest",
+      "webpack-env",
+      "webmidi",
+      "wicg-file-system-access"
+    ],
+    "baseUrl": "./src",
+    "sourceMap": true,
+    "target": "esnext",
+    "module": "es2015",
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@emotion/react",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "lib": ["es2019", "dom", "ESNext.Collection"],
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    "useDefineForClassFields": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "paths": {
+      // Avoid referencing the node_modules of the library when developing a local library.
+      "@types/react": ["../node_modules/@types/react"]
+    }
+  },
+  "include": ["src/**/*"]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "signal",
+  "version": "0.0.1",
+  "description": "A friendly music sequencer application for OS X and Windows.",
+  "scripts": {
+    "start": "turbo run dev --parallel",
+    "build": "npm run build:app",
+    "build:app": "turbo build && cpx \"app/dist/**/*\" dist",
+    "serve": "npx http-server dist",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "format": "turbo format",
+    "firebase": "npm --prefix functions run build && firebase emulators:start",
+    "firebase:deploy": "firebase deploy",
+    "dev:electron": "concurrently \"npm run dev:electron -w app\" \"npm run dev --prefix electron\"",
+    "build:electron": "npm run build:electron -w app && rimraf electron/dist_renderer && cpx \"app/dist/**/*\" electron/dist_renderer",
+    "package:electron:darwin": "npm run build:electron && npm run package:darwin --prefix electron",
+    "package:electron": "npm run build:electron && npm run package --prefix electron",
+    "make:electron": "npm run build:electron && npm run make:mas --prefix electron",
+    "make:darwin": "npm run build:electron && npm run make:darwin --prefix electron",
+    "make:win": "npm run build:electron && npm run make:win --prefix electron"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryohey/signal.git"
+  },
+  "author": "ryohey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ryohey/signal/issues"
+  },
+  "homepage": "https://github.com/ryohey/signal/",
+  "private": true,
+  "devDependencies": {
+    "cpx": "^1.5.0",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "turbo": "^2.5.2"
+  },
+  "workspaces": [
+    "app",
+    "packages/*"
+  ],
+  "packageManager": "npm@11.3.0"
+}
