@@ -83,7 +83,7 @@ export const tokensToNotes = (tokens: string, notesOffset: number) => {
   return notes
 }
 
-export function notesToTokens (notes: any) {
+export function notesToTokens(notes: any) {
   // --- Format header
   const tokens: string[] = [];
   tokens.push("TEMPO 120");
@@ -108,9 +108,13 @@ export function notesToTokens (notes: any) {
     // NOTE_ON line
     tokens.push(`NOTE_ON ${noteName} VELOCITY ${velocity}`);
 
+    tokens.push(`NOTE_START ${startTick}`);
+
     // TIME_SHIFT for note duration
     const dur = endTick - startTick;
     tokens.push(`TIME_SHIFT ${dur}`);
+
+    tokens.push(`NOTE_END ${endTick}`);
 
     // NOTE_OFF line
     tokens.push(`NOTE_OFF ${noteName}`);
