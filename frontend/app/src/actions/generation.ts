@@ -1,6 +1,6 @@
 import { useCallback } from "react"
 import { useSong } from "../hooks/useSong"
-import { completeMidi } from "../services/AiService";
+import { completeMidi, getMidiResponse } from "../services/AiService";
 
 // Helper to convert MIDI number to pitch name, e.g. 60 → C4
 function midiToPitchName(n: number): string {
@@ -66,9 +66,81 @@ export const useGenerateNotes = () => {
 
     const resultStr = await completeMidi(finalStr);
     console.log(resultStr);
+
+    setTimeout(async () => {
+      checkResponseReady(resultStr.id, currentTrack);
+    }, 1000);
+
   }, [tracks]);
 
   return {
     generateNotes,
   };
+}
+
+async function checkResponseReady(id: string, currentTrack: any) {
+  const result = await getMidiResponse(id);
+  console.log(result);
+  if (result.status === "completed") {
+    console.log(result.tokens);
+
+    // INSERT_YOUR_CODE
+    // This will convert tokens (string) to an array of events.
+    // Each line of tokens is a single event in the format described.
+    const tokenLines = result.tokens.split('\n').map((line: string) => line.trim()).filter(Boolean);
+    const events = [];
+    for (const line of tokenLines) {
+      // Example event formats:
+      // - TEMPO 120
+      // - TIMEBASE 480
+      // - NOTE_ON C4 VELOCITY 100
+      // - NOTE_START 960
+      // - NOTE_END 1200
+      // - TIME_SHIFT 480
+      // - NOTE_OFF C4
+      const parts = line.split(' ');
+      switch (parts[0]) {
+        case 'TEMPO':
+          events.push({ type: 'TEMPO', bpm: Number(parts[1]) });
+          break;
+        case 'TIMEBASE':
+          events.push({ type: 'TIMEBASE', timebase: Number(parts[1]) });
+          break;
+        case 'NOTE_ON':
+          events.push({ 
+            type: 'NOTE_ON', 
+            note: parts[1], 
+            velocity: Number(parts[3]) 
+          });
+          break;
+        case 'NOTE_START':
+          events.push({ type: 'NOTE_START', start: Number(parts[1]) });
+          break;
+        case 'NOTE_END':
+          events.push({ type: 'NOTE_END', end: Number(parts[1]) });
+          break;
+        case 'TIME_SHIFT':
+          events.push({ type: 'TIME_SHIFT', shift: Number(parts[1]) });
+          break;
+        case 'NOTE_OFF':
+          events.push({ type: 'NOTE_OFF', note: parts[1] });
+          break;
+        default:
+          // Unknown token, ignore or log warning
+          break;
+      }
+    }
+    console.log("Events:", events);
+
+    // INSERT_YOUR_CODE
+    if (Array.isArray(currentTrack?.events)) {
+      currentTrack.events.push(...events);
+    }
+
+
+    return result.tokens;
+  }
+  setTimeout(() => {
+    checkResponseReady(id, currentTrack);
+  }, 1000);
 }

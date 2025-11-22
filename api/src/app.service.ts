@@ -1,15 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 // import { MidiTokenProcessor } from './utils';
 import { CreateResponseCommand } from './commands/create-response.command';
+import { Job, JobStatus } from './types';
 
 @Injectable()
 export class AppService {
-  private responses: Record<string, string> = {};
+  private responses: Record<string, Job> = {};
   constructor(
     // private readonly midiTokenProcessor: MidiTokenProcessor
   ) {}
 
-  completeMidi(tokens: string, model?: string, measure?: number): string {
+  completeMidi(tokens: string, model?: string, measure?: number): Job {
     const generatedResponseId: string = this.generateId();
     console.log('Generating response for tokens:', tokens);
     // this.midiTokenProcessor.midiToTokens(tokens, 480);
@@ -36,13 +37,27 @@ Please provide the extended music in the same token format:
       model,
     );
 
-    return generatedResponseId;
-  }
-  getTokenId(id: string): string | undefined {
-    return this.responses[id];
+    const response: Job = {
+      id: generatedResponseId,
+      status: JobStatus.PENDING
+    }
+
+    this.responses[generatedResponseId] = response;
+
+    return response;
   }
 
-  generateMidi(input: string): string {
+  getTokenId(id: string): Job {
+    const response = this.responses[id];
+
+    if (!response) {
+      throw new NotFoundException(`Job ${id} not found`);
+    }
+  
+    return response
+  }
+
+  generateMidi(input: string): Job {
     const generatedResponseId: string = this.generateId();
     const instructions = `You are an AI music composer. The user will provide a natural-language description of a musical idea, such as a melody, mood, style, tempo, rhythm, or harmonic feel.
 
@@ -71,7 +86,14 @@ Rules:
 
     void this.generateResponse(generatedResponseId, input, instructions);
 
-    return generatedResponseId;
+    const response: Job = {
+      id: generatedResponseId,
+      status: JobStatus.PENDING
+    };
+
+    this.responses[generatedResponseId] = response;
+
+    return response;
   }
 
   private async generateResponse(
@@ -94,7 +116,12 @@ Rules:
       'Took ' + timeInMinutes.toFixed(2) + ' minutes to generate the response.',
     );
     console.log(generatedResponseId);
-    this.responses[generatedResponseId] = response;
+    
+    this.responses[generatedResponseId] = {
+      id: generatedResponseId,
+      status: JobStatus.COMPLETED,
+      tokens: response
+    };
   }
 
   private generateId(): string {
