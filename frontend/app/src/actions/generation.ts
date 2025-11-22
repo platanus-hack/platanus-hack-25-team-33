@@ -45,6 +45,7 @@ export const useGenerateNotes = ({ onSuccess }: { onSuccess?: (explanation: stri
       });
     }, 1000);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tracks, selectedTrack, setCandidateNotes]);
 
   return {
@@ -57,6 +58,11 @@ export const useGenerateNotes = ({ onSuccess }: { onSuccess?: (explanation: stri
 async function checkMidiResponseReady(id: string, selectedTrack: any, setCandidateNotes: (notes: any[], explanation: string) => void) {
   const result = await getMidiResponse(id);
   console.log(result);
+
+  if (result.status === "failed") {
+    alert("Failed to generate MIDI completion.");
+    return;
+  }
 
   if (result.status === "completed") {
     let lastNoteEnd = 0;
@@ -71,6 +77,7 @@ async function checkMidiResponseReady(id: string, selectedTrack: any, setCandida
         }
       }
     }
+    
 
     const candidateNotes = tokensToNotes(result.tokens, lastNoteEnd)
     setCandidateNotes(candidateNotes, result.explanation);

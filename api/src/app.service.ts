@@ -123,7 +123,13 @@ ${prompt}
       ) as MidiResponse;
     } catch (error) {
       console.error('Error parsing response:', error);
-      return; // Exit if JSON parsing fails
+      this.responses[generatedResponseId] = {
+        id: generatedResponseId,
+        status: JobStatus.FAILED,
+        tokens: '',
+        explanation: '',
+      };
+      return;
     }
 
     // Extract explanation and tokens
