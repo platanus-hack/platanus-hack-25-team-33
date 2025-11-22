@@ -40,15 +40,15 @@ export const PianoRollToolbar: FC = () => {
 
       <FlexibleSpacer />
 
+      <GenerativeAIMenu />
+
+      <FlexibleSpacer />
+
       <PianoRollToolSelector />
 
       <QuantizeSelector />
 
       <AutoScrollButton />
-
-      <FlexibleSpacer />
-
-      <GenerativeAIMenu />
     </Toolbar>
   )
 }
