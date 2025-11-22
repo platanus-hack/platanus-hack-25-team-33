@@ -1,6 +1,6 @@
-import { useCallback, useRef } from "react"
+import { useCallback, useRef, useState } from "react"
 import { useSong } from "../hooks/useSong"
-import { completeMidi, getMidiResponse } from "../services/AiService";
+import { completeMidi, generateAccompanimentMidi, getMidiResponse } from "../services/AiService";
 import { isNoteEvent, NoteEvent } from "@signal-app/core";
 
 import { usePianoRoll } from "../hooks/usePianoRoll"
@@ -12,7 +12,13 @@ export const useGenerateNotes = () => {
   const selectedTrackRef = useRef(selectedTrack);
   selectedTrackRef.current = selectedTrack;
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const generateNotes = useCallback(async (instrument: string) => {
+    setIsLoading(true);
+    setIsSuccess(false);
+
     // Use track 1 as in the example (A3, E4, etc. are typically not in track 0/metronome/drums)
     if (tracks.length < 2) return;
 
@@ -23,21 +29,27 @@ export const useGenerateNotes = () => {
 
     const tokens = notesToTokens(notes)
 
-    const resultStr = await completeMidi(tokens, instrument);
-    console.log(resultStr);
+    const result = await completeMidi(tokens, instrument);
+    console.log(result);
 
     setTimeout(async () => {
-      checkResponseReady(resultStr.id, () => selectedTrackRef.current, setCandidateNotes);
+      checkMidiResponseReady(result.id, selectedTrack, (notes: any[]) => {
+        setIsLoading(false);
+        setIsSuccess(true);
+        setCandidateNotes(notes);
+      });
     }, 1000);
 
   }, [tracks, selectedTrack]);
 
   return {
     generateNotes,
+    isLoading,
+    isSuccess,
   };
 }
 
-async function checkResponseReady(id: string, getSelectedTrack: () => any, setCandidateNotes: (notes: any[]) => void) {
+async function checkMidiResponseReady(id: string, selectedTrack: any, setCandidateNotes: (notes: any[]) => void) {
   const result = await getMidiResponse(id);
   console.log(result);
 
@@ -45,7 +57,6 @@ async function checkResponseReady(id: string, getSelectedTrack: () => any, setCa
     console.log(result.tokens);
 
     let lastNoteEnd = 0;
-    const selectedTrack = getSelectedTrack();
 
     if (selectedTrack && Array.isArray(selectedTrack.events)) {
       for (const event of selectedTrack.events) {
@@ -64,19 +75,48 @@ async function checkResponseReady(id: string, getSelectedTrack: () => any, setCa
     return result.tokens;
   }
   setTimeout(() => {
-    checkResponseReady(id, getSelectedTrack, setCandidateNotes);
+    checkMidiResponseReady(id, selectedTrack, setCandidateNotes);
   }, 1000);
 }
 
-function pitchNameToMidi(pitch: string): number {
-  const noteToNum: Record<string, number> = {
-    "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3,
-    "E": 4, "F": 5, "F#": 6, "Gb": 6, "G": 7, "G#": 8, "Ab": 8,
-    "A": 9, "A#": 10, "Bb": 10, "B": 11
+export const useGenerateAccompaniment = ({ onSuccess }: { onSuccess: () => void }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const generateAccompaniment = useCallback(async (prompt: string, tokens: string, instrument: string) => {
+    setIsLoading(true);
+    setIsSuccess(false);
+
+    const result = await generateAccompanimentMidi(prompt, tokens, instrument);
+    console.log(result);
+
+    setTimeout(async () => {
+      checkAccompanimentResponseReady(result.id, () => {
+        setIsLoading(false);
+        setIsSuccess(true);
+        onSuccess()
+      })
+    }, 1000);
+  }, []);
+
+  return {
+    generateAccompaniment,
+    isLoading,
+    isSuccess,
   };
-  const match = pitch.match(/^([A-G][#b]?)(-?\d+)$/);
-  if (!match) return 60;
-  const note = match[1];
-  const octave = parseInt(match[2], 10);
-  return (octave + 1) * 12 + (noteToNum[note] || 0);
+}
+
+
+async function checkAccompanimentResponseReady(id: string, onSuccess: () => void) {
+  const result = await getMidiResponse(id);
+  console.log(result);
+
+  if (result.status === "completed") {
+    console.log(result.tokens);
+    onSuccess()
+  } else {
+    setTimeout(() => {
+      checkAccompanimentResponseReady(id, onSuccess);
+    }, 1000);
+  }
 }

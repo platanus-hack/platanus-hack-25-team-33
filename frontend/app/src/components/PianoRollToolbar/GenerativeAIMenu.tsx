@@ -11,7 +11,7 @@ const Container = styled.div`
 `
 
 export const GenerativeAIMenu = () => {
-  const { generateNotes } = useGenerateNotes()
+  const { generateNotes, isLoading } = useGenerateNotes()
   const { setting } = useInstrumentBrowser()
 
   const selectedInstrumentName = ReactDOMServer.renderToString(
@@ -21,7 +21,7 @@ export const GenerativeAIMenu = () => {
   return (
     <Container>
       <PrimaryButton onClick={() => generateNotes(selectedInstrumentName)}>
-        Generate notes
+        {isLoading ? 'Generando...' : 'Generar notas'}
       </PrimaryButton>
     </Container>
   )

@@ -20,3 +20,15 @@ export const getMidiResponse = async (id: string) => {
   const data = await response.json();
   return data;
 }
+
+export const generateAccompanimentMidi = async (prompt: string, tokens: string, instrument: string) => {
+  const response = await fetch(`${apiUrl}/generateAccompanimentMidi`, {
+    method: 'POST',
+    body: JSON.stringify({ prompt, tokens, instrument }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const data = await response.json();
+  return data;
+}
