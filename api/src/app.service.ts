@@ -6,12 +6,8 @@ import { CreateResponseCommand } from './commands/create-response.command';
 export class AppService {
   constructor(private readonly midiTokenProcessor: MidiTokenProcessor) {}
 
-  async completeMidi(midiPath: string, timebase: number): Promise<void> {
+  async completeMidi(tokens: string, timebase: number): Promise<void> {
     const createResponse = new CreateResponseCommand();
-    const inputTokens = this.midiTokenProcessor.midiToTokens(
-      midiPath,
-      timebase,
-    );
 
     const instructions = `You are an AI music composer. The input below consists of a series of MIDI events, including tempo, note events, start times, and velocities. Your task is to "complete" the music while maintaining the rhythm, scale, mode, and musical consistency based on the given data. Ensure the melody flows naturally, respecting the existing patterns and structure. Extend the piece with new notes, rhythms, and harmonic progressions that fit within the existing context.
 
@@ -26,11 +22,10 @@ export class AppService {
     - TIME_SHIFT [shiftTime]
     - NOTE_OFF [note]`;
 
-    console.log('INPUT TOKENS: ' + inputTokens);
 
     const response = await createResponse.execute({
       model: 'gpt-5-nano',
-      input: inputTokens,
+      input: tokens,
       instructions,
     });
 
