@@ -8,4 +8,5 @@ export interface Job {
   id: string;
   status: JobStatus;
   tokens?: string;
+  explanation?: string;
 }

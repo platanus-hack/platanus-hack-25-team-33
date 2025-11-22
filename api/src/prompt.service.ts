@@ -3,37 +3,43 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class PromptService {
   getCompleteMidiPrompt(measure: number) {
-    return `You are an AI music composer. The input below consists of a series of MIDI events, including tempo, note events, start times, and velocities. Your task is to "complete" the music while maintaining the rhythm, scale, mode, and musical consistency based on the given data.
+    return `You are an AI music composer. The input below consists of a series of MIDI events, including tempo, note events, start times, and velocities. Your task is to extend the music by completing the given sequence, while ensuring that the extension is musically consistent, harmonious, and follows the same style.
 
-Please extend the piece with additional notes, ensuring the following:
+Please follow these instructions when completing the piece:
 
-1. **Harmonic Consistency**: 
-   - If the original material consists of **long-held chords** (such as triads, seventh chords, etc.), continue using **full chords** in the extension. These chords should be sustained in the same or similar fashion. Avoid breaking them into single notes or creating simple, melodic lines from the chords.
-   - The extension should **support the existing harmony** using **block chords**, **arpeggios**, or **harmonic fills** that maintain the **same harmonic function** as the original chords.
+### 1. **Harmonic Consistency**:
+- If the original material consists of **long-held chords** (such as triads, seventh chords, etc.), continue using **full chords** in the extension. These chords should be sustained in the same or similar fashion, avoiding the creation of simple melodic lines.
+- The extension should **support the existing harmony** using **block chords**, **arpeggios**, or **harmonic fills** that maintain the **same harmonic function** as the original chords. Don’t introduce new, unrelated harmonies unless explicitly requested.
 
-2. **Maintaining Repetition**: 
-   - If the original material involves **repetitive motifs**, **arpeggios**, or **chord progressions**, continue the repetition in the extended section. Use **harmonically related chords** that follow the same **rhythmic structure**. This may include **parallel harmony**, **counterpoint**, or **repeated chords**.
+### 2. **Maintain Repetition**:
+- If the original material involves **repetitive motifs**, **arpeggios**, or **chord progressions**, **continue the repetition** in the extended section.
+- Use **harmonically related chords** that follow the same **rhythmic structure** as the original material. This can include **parallel harmony**, **counterpoint**, or **repeated chords** to preserve the feel of the original composition.
 
-3. **Rhythmic Cohesion**: 
-   - The extension should **maintain the rhythmic structure** of the original material. This includes respecting the **time signature**, **note durations**, and **tempo**. Ensure that the **duration of the chords** (or arpeggios) is consistent with the original material. The extension should feel like a **natural continuation** of the existing rhythm without introducing unnecessary complexity.
+### 3. **Rhythmic Cohesion**:
+- Ensure that the extension **matches the rhythmic structure** of the original material. This includes respecting the **time signature**, **note durations**, and **tempo**.
+- The duration and pattern of the chords (or arpeggios) should remain consistent with the original material, avoiding unnecessary complexity or deviations in rhythm. The extension should feel like a **natural continuation** of the existing rhythm.
 
-4. **Key and Mode Integrity**: 
-   - The new notes and chords must stay within the **same key** and **mode** as the original piece. Any new harmony or counterpoint should be **harmonically appropriate** for the key and mode to maintain a cohesive sound.
+### 4. **Key and Mode Integrity**:
+- The extension must remain in the **same key** and **mode** as the original piece.
+- Any new harmony or counterpoint should fit **harmonically** within the key and mode, ensuring the extension is cohesive with the original.
 
-5. **Supportive Role**: 
-   - The new music should **support the existing harmonic base**. This can be done by adding **parallel harmony**, **chordal support**, or **background textures**. The extended section should enhance the existing material without becoming a dominant melody or solo.
+### 5. **Supportive Role**:
+- The new section should **complement and support the original material**. This can be achieved by adding **parallel harmony**, **chordal support**, or **background textures**.
+- Avoid creating a dominant melody or solo line unless explicitly requested. The extension should feel like a **supporting continuation** of the original musical structure.
 
-6. **Number of Compasses**: 
-   - Extend the music to complete ${measure} compasses (measures). Ensure the extension feels like a seamless continuation of the existing material, with consistent **harmonic progressions**, **rhythmic elements**, and **melodic movement**.
+### 6. **Length**:
+- Extend the piece to complete **${measure} measures**. Ensure that the extension feels like a **natural continuation** of the original material, maintaining consistent **harmonic progressions**, **rhythmic elements**, and **melodic movement**.
 
-Please provide the extended music in the same token format:
-- TEMPO [bpm]
-- TIMEBASE [timebase]
-- NOTE_ON [note] VELOCITY [velocity]
-- NOTE_START [startTime]
-- NOTE_END [endTime]
-- TIME_SHIFT [shiftTime]
-- NOTE_OFF [note]`;
+---
+
+### **Response Format**:
+Please format your response in the following **JSON structure**, ONLY respond this json:
+    {
+      "explanation": "[Your detailed explanation of the decisions you made, including harmonic choices, rhythmic structure, and any relevant context. Be detailed about your choices, for example, why you chose specific chords or notes.]","tokens":"TEMPO [bpm]\nTIMEBASE [timebase]\nNOTE_ON [note]\nVELOCITY [velocity]\nNOTE_START [startTime]\nNOTE_END [endTime]\nNOTE_OFF [note]"
+      }
+    ]
+    }
+    `;
   }
 
   getGenerateMidiPrompt() {

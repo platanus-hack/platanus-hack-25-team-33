@@ -2,6 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateResponseCommand } from './commands/create-response.command';
 import { Job, JobStatus } from './types';
 import { PromptService } from './prompt.service';
+interface MidiResponse {
+  explanation: string;
+  tokens: string;
+}
 
 @Injectable()
 export class AppService {
@@ -107,12 +111,25 @@ ${prompt}
     console.log(
       'Took ' + timeInMinutes.toFixed(2) + ' minutes to generate the response.',
     );
-    console.log(generatedResponseId);
+    let parsedResponse: MidiResponse;
+
+    try {
+      parsedResponse = JSON.parse(response) as MidiResponse;
+    } catch (error) {
+      console.error('Error parsing response:', error);
+      return; // Exit if JSON parsing fails
+    }
+
+    // Extract explanation and tokens
+    const explanation =
+      parsedResponse.explanation || 'No explanation provided.';
+    const tokens = parsedResponse.tokens || 'No tokens provided.';
 
     this.responses[generatedResponseId] = {
       id: generatedResponseId,
       status: JobStatus.COMPLETED,
-      tokens: response,
+      tokens: tokens,
+      explanation: explanation,
     };
   }
 
