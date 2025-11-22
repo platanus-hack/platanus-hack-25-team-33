@@ -79,6 +79,14 @@ export const usePianoRollKeyboardShortcut = () => {
           }
         },
       },
+      {
+        code: "Escape",
+        run: () => {
+          if (candidateNotes.length > 0) {
+            setCandidateNotes([])
+          }
+        },
+      },
     ],
     [
       scrollBy,
