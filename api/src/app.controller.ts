@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -10,19 +10,23 @@ export class AppController {
     @Body()
     body: {
       tokens: string;
-      timebase: number;
       model?: string;
       measure?: number;
     },
-  ): void {
-    const { tokens, timebase, model, measure } = body;
-    this.appService.completeMidi(tokens, timebase, model, measure);
+  ): string {
+    const { tokens, model, measure } = body;
+    return this.appService.completeMidi(tokens, model, measure);
+  }
+
+  @Get('/token/:id')
+  completedMidi(@Param('id') id: string): string {
+    return this.appService.getTokenId(id);
   }
 
   @Post('generateMidi')
   generateMidi(@Body() body: { prompt: string }): void {
     console.log(body);
     const { prompt } = body;
-    this.appService.generateMidi(prompt);
+    void this.appService.generateMidi(prompt);
   }
 }
