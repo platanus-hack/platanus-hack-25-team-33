@@ -1,8 +1,7 @@
 import { useCallback, useRef, useState } from "react"
 import { useSong } from "../hooks/useSong"
 import { completeMidi, generateAccompanimentMidi, getMidiResponse } from "../services/AiService";
-import { isNoteEvent, NoteEvent } from "@signal-app/core";
-
+import { emptyTrack, isNoteEvent, NoteEvent, Track } from "@signal-app/core";
 import { usePianoRoll } from "../hooks/usePianoRoll"
 import { notesToTokens, tokensToNotes } from "../utils/tokens";
 
@@ -80,6 +79,10 @@ async function checkMidiResponseReady(id: string, selectedTrack: any, setCandida
 }
 
 export const useGenerateAccompaniment = ({ onSuccess }: { onSuccess: () => void }) => {
+  const { tracks, addTrack } = useSong();
+  const lastTrackRef = useRef(tracks[tracks.length - 1]);
+  lastTrackRef.current = tracks[tracks.length - 1];
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -91,7 +94,13 @@ export const useGenerateAccompaniment = ({ onSuccess }: { onSuccess: () => void 
     console.log(result);
 
     setTimeout(async () => {
-      checkAccompanimentResponseReady(result.id, () => {
+      checkAccompanimentResponseReady(result.id, (tokens: string) => {
+        const newTrack = emptyTrack(0)
+        const notes = tokensToNotes(tokens, 0)
+        console.log('notes: ', notes)
+        newTrack.addEvents(notes)
+        addTrack(newTrack)
+
         setIsLoading(false);
         setIsSuccess(true);
         onSuccess()
@@ -107,13 +116,13 @@ export const useGenerateAccompaniment = ({ onSuccess }: { onSuccess: () => void 
 }
 
 
-async function checkAccompanimentResponseReady(id: string, onSuccess: () => void) {
+async function checkAccompanimentResponseReady(id: string, onSuccess: (result: string) => void) {
   const result = await getMidiResponse(id);
   console.log(result);
 
   if (result.status === "completed") {
     console.log(result.tokens);
-    onSuccess()
+    onSuccess(result.tokens)
   } else {
     setTimeout(() => {
       checkAccompanimentResponseReady(id, onSuccess);

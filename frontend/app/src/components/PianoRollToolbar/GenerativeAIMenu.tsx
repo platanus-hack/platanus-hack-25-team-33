@@ -20,7 +20,7 @@ export const GenerativeAIMenu = () => {
 
   return (
     <Container>
-      <PrimaryButton onClick={() => generateNotes(selectedInstrumentName)}>
+      <PrimaryButton onClick={() => generateNotes(selectedInstrumentName)} disabled={isLoading}>
         {isLoading ? 'Generando...' : 'Generar notas'}
       </PrimaryButton>
     </Container>

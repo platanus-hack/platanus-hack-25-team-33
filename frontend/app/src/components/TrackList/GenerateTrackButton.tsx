@@ -5,6 +5,9 @@ import { Dialog, DialogContent, DialogTitle, DialogActions } from "../../compone
 import { Button, PrimaryButton } from "../ui/Button"
 import { Select } from "../ui/Select"
 import { useGenerateAccompaniment } from "../../actions/generation"
+import { usePianoRoll } from "../../hooks/usePianoRoll"
+import { notesToTokens } from "../../utils/tokens"
+import { isNoteEvent } from "@signal-app/core"
 
 const Wrapper = styled.div`
   display: flex;
@@ -39,7 +42,7 @@ const Input = styled.input`
 const INSTRUMENTS = ['Piano', 'Bass', 'Strings', 'Drums', 'Choir', 'Synth']
 
 export const GenerateTrackButton: FC = () => {
-  const addTrack = useAddTrack()
+  const { selectedTrack } = usePianoRoll()
   const [open, setOpen] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [instrument, setInstrument] = useState('Piano')
@@ -49,10 +52,14 @@ export const GenerateTrackButton: FC = () => {
     generateAccompaniment
   } = useGenerateAccompaniment({
     onSuccess: () => {
-      addTrack()
       setOpen(false)
     },
   })
+
+  const notes = selectedTrack?.events.filter(isNoteEvent) || []
+  const tokens = notesToTokens(notes)
+
+  console.log({ tokens })
 
   return (
     <div>
@@ -73,12 +80,12 @@ export const GenerateTrackButton: FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.5em', width: '400px' }}>
             <div style={{ marginBottom: '1em'}}>
               <Label>Prompt</Label>
-              <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+              <Input disabled={isLoading} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
             </div>
 
             <div>
               <Label>Instrument</Label>
-              <Select value={instrument} onChange={(e) => {
+              <Select value={instrument} disabled={isLoading} onChange={(e) => {
                 setInstrument(e.target.value)
               }}>
                 {INSTRUMENTS.map((instrument) => (
@@ -92,7 +99,7 @@ export const GenerateTrackButton: FC = () => {
           <Button onClick={() => setOpen(false)}>
             Cancelar
           </Button>
-          <PrimaryButton onClick={() => generateAccompaniment(prompt, '', instrument)}>
+          <PrimaryButton onClick={() => generateAccompaniment(prompt, tokens || '', instrument)} disabled={isLoading}>
             {isLoading ? 'Generando...' : 'Generar'}
           </PrimaryButton>
         </DialogActions>
