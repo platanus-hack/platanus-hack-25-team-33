@@ -8,7 +8,12 @@ export class AppService {
   private responses: Record<string, Job> = {};
   constructor(private readonly promptService: PromptService) {}
 
-  completeMidi(tokens: string, measure: number, model?: string): Job {
+  completeMidi(
+    tokens: string,
+    instrument: string,
+    measure: number,
+    model?: string,
+  ): Job {
     const generatedResponseId: string = this.generateId();
     console.log('Generating response for tokens:', tokens);
     const instructions = this.promptService.getCompleteMidiPrompt(measure);
@@ -63,7 +68,8 @@ export class AppService {
   ): Job {
     const generatedResponseId: string = this.generateId();
     console.log('Generating response for tokens:', tokens);
-    const instructions = this.promptService.getAccompanimentMidiPrompt(instrument);
+    const instructions =
+      this.promptService.getAccompanimentMidiPrompt(instrument);
     const input = `The user has provided the following melody or musical idea in token format:
 ${tokens}
 --

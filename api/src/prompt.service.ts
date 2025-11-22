@@ -3,14 +3,28 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class PromptService {
   getCompleteMidiPrompt(measure: number) {
-    return `
-Please extend the piece with additional notes, ensuring that the rhythmic structure is varied and the harmony and progression stay consistent with the key and mode of the original piece. The melody should flow naturally and maintain musical cohesion with the existing material.
+    return `You are an AI music composer. The input below consists of a series of MIDI events, including tempo, note events, start times, and velocities. Your task is to "complete" the music while maintaining the rhythm, scale, mode, and musical consistency based on the given data.
 
-### Specific Instructions:
-1. **Note Duration Variety**: The duration of the notes should vary significantly. Avoid making all the notes the same duration. Include a variety of note lengths such as **eighth notes**, **quarter notes**, **half notes**, **dotted rhythms**, and even **longer note durations** (whole notes). Do not generate notes with the same fixed distance between them (e.g., don't make all the notes 0.5 apart).
-2. **Irregular Timing**: Ensure that the timing between notes (note start and end) varies. There should be **a natural variety** in the spacing between notes to give the piece a dynamic and expressive feel. Some notes can be closely spaced, while others should be further apart.
-3. **Phrasing and Rhythm**: The rhythm should feel natural, with **syncopation**, **rests**, and **dynamic phrasing**. The note durations should not follow a fixed, repetitive pattern (such as every note being a quarter note or every note spaced the same).
-4. **Number of Compasses**: Extend the music to complete **${measure} compasses** (measures) of music. Ensure that the extension feels like a seamless continuation of the existing material, with appropriate harmonic progressions and melodic movement.
+Please extend the piece with additional notes, ensuring the following:
+
+1. **Harmonic Consistency**: 
+   - If the original material consists of **long-held chords** (such as triads, seventh chords, etc.), continue using **full chords** in the extension. These chords should be sustained in the same or similar fashion. Avoid breaking them into single notes or creating simple, melodic lines from the chords.
+   - The extension should **support the existing harmony** using **block chords**, **arpeggios**, or **harmonic fills** that maintain the **same harmonic function** as the original chords.
+
+2. **Maintaining Repetition**: 
+   - If the original material involves **repetitive motifs**, **arpeggios**, or **chord progressions**, continue the repetition in the extended section. Use **harmonically related chords** that follow the same **rhythmic structure**. This may include **parallel harmony**, **counterpoint**, or **repeated chords**.
+
+3. **Rhythmic Cohesion**: 
+   - The extension should **maintain the rhythmic structure** of the original material. This includes respecting the **time signature**, **note durations**, and **tempo**. Ensure that the **duration of the chords** (or arpeggios) is consistent with the original material. The extension should feel like a **natural continuation** of the existing rhythm without introducing unnecessary complexity.
+
+4. **Key and Mode Integrity**: 
+   - The new notes and chords must stay within the **same key** and **mode** as the original piece. Any new harmony or counterpoint should be **harmonically appropriate** for the key and mode to maintain a cohesive sound.
+
+5. **Supportive Role**: 
+   - The new music should **support the existing harmonic base**. This can be done by adding **parallel harmony**, **chordal support**, or **background textures**. The extended section should enhance the existing material without becoming a dominant melody or solo.
+
+6. **Number of Compasses**: 
+   - Extend the music to complete ${measure} compasses (measures). Ensure the extension feels like a seamless continuation of the existing material, with consistent **harmonic progressions**, **rhythmic elements**, and **melodic movement**.
 
 Please provide the extended music in the same token format:
 - TEMPO [bpm]
@@ -19,8 +33,7 @@ Please provide the extended music in the same token format:
 - NOTE_START [startTime]
 - NOTE_END [endTime]
 - TIME_SHIFT [shiftTime]
-- NOTE_OFF [note]
-`;
+- NOTE_OFF [note]`;
   }
 
   getGenerateMidiPrompt() {

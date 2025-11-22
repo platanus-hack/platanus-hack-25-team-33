@@ -11,12 +11,18 @@ export class AppController {
     @Body()
     body: {
       tokens: string;
+      instrument: string;
       model?: string;
       measure?: number;
     },
   ): Job {
-    const { tokens, model, measure } = body;
-    return this.appService.completeMidi(tokens, measure ?? 1, model);
+    const { tokens, instrument, model, measure } = body;
+    return this.appService.completeMidi(
+      tokens,
+      instrument,
+      measure ?? 1,
+      model,
+    );
   }
 
   @Get('/token/:id')
