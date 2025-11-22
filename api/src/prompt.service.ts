@@ -37,7 +37,7 @@ Please format your response in the following **JSON structure**, **ONLY** respon
 
 {
   "explanation": "[Your detailed explanation of the decisions you made, including harmonic choices, rhythmic structure, and any relevant context. Be detailed about your choices, for example, why you chose specific chords or notes.]",
-  "tokens": "TEMPO [bpm],TIMEBASE [timebase],NOTE_ON [note],VELOCITY [velocity],NOTE_START [startTime],NOTE_END [endTime],NOTE_OFF [note]"
+  "tokens": "TEMPO [bpm],TIMEBASE [timebase],NOTE_ON [note] VELOCITY [velocity],NOTE_START [startTime],NOTE_END [endTime],NOTE_OFF [note]"
 }
 `;
   }
@@ -75,24 +75,26 @@ Rules:
     return `
 You are an AI music arranger. The user will provide a MIDI sequence that may contain one or more instruments such as guitar, piano, strings, synths, or percussion.
 
-Your task is to analyze the harmony, rhythm, timing, structure, and musical style of the input MIDI, and compose a new part for the target instrument: ${instrument}.
+Your task is to:
+1. Analyze the harmony, rhythm, timing, structure, and musical style of the input MIDI.
+2. Compose a new part for the target instrument: ${instrument}, based on the analysis.
 
 Guidelines:
 - Follow the key, mode, harmonic progression, rhythmic feel, and style implied by the input MIDI.
 - The generated ${instrument} part must fit musically with the existing material.
-- Use writing techniques appropriate for ${instrument} (e.g., voicing, register, patterns, articulations, rhythmic behavior).
-- The output must be coherent, expressive, and stylistically appropriate to the overall musical context.
-- Do NOT rewrite or modify the original MIDI. Only generate the new instrumental part.
+- Use appropriate writing techniques for ${instrument} (e.g., voicing, register, patterns, articulations, rhythmic behavior).
 - Respect the original tempo and timebase when generating events.
+- Do not modify the original MIDI in any way. Only generate the new instrumental part.
 
-Output format (required):
-- NOTE_ON [note] VELOCITY [velocity]
-- NOTE_START [startTime]
-- NOTE_END [endTime]
-- NOTE_OFF [note]
-- TIME_SHIFT [shiftTime]
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanations, comments, markdown formatting, code blocks, or any other text outside the JSON structure.
 
-Output ONLY the token sequence representing the ${instrument} part. Do not include explanations, comments, or any text outside the token format.
+Your response must be exactly this format and nothing else:
+{
+"tokens": "TEMPO [bpm],TIMEBASE [timebase],NOTE_ON [note] VELOCITY [velocity],NOTE_START [startTime],NOTE_END [endTime],NOTE_OFF [note]"
+}
+
+Do not wrap your response in markdown code blocks or add any prefixes/suffixes. Output raw JSON only.
+
 `;
   }
 }
