@@ -20,12 +20,11 @@ export class AppController {
 
   @Get('/token/:id')
   completedMidi(@Param('id') id: string): string {
-    return this.appService.getTokenId(id);
+    return this.appService.getTokenId(id) ?? '';
   }
 
   @Post('generateMidi')
   generateMidi(@Body() body: { prompt: string }): void {
-    console.log(body);
     const { prompt } = body;
     void this.appService.generateMidi(prompt);
   }
