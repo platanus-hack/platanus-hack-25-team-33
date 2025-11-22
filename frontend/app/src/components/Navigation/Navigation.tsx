@@ -1,6 +1,7 @@
 import styled from "@emotion/styled"
 import Forum from "mdi-react/ForumIcon"
 import Help from "mdi-react/HelpCircleIcon"
+import Robot from "mdi-react/RobotIcon"
 import Settings from "mdi-react/SettingsIcon"
 import { CSSProperties, FC, MouseEvent, useCallback } from "react"
 import { getPlatform, isRunningInElectron } from "../../helpers/platform"
@@ -83,7 +84,7 @@ export const IconStyle: CSSProperties = {
 }
 
 export const Navigation: FC = () => {
-  const { setOpenSettingDialog, setOpenHelpDialog } = useRootView()
+  const { setOpenSettingDialog, setOpenHelpDialog, openAISidebar, setOpenAISidebar } = useRootView()
   const { path, setPath } = useRouter()
 
   const onClickPianoRollTab = useCallback(
@@ -124,6 +125,14 @@ export const Navigation: FC = () => {
       setOpenHelpDialog(true)
     },
     [setOpenHelpDialog],
+  )
+
+  const onClickAI = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault()
+      setOpenAISidebar(!openAISidebar)
+    },
+    [openAISidebar, setOpenAISidebar],
   )
 
   return (
@@ -189,6 +198,13 @@ export const Navigation: FC = () => {
       </Tooltip>
 
       <FlexibleSpacer />
+
+      <Tab onClick={onClickAI} className={openAISidebar ? "active" : undefined}>
+        <Robot style={IconStyle} />
+        <TabTitle>
+          AI Assistant
+        </TabTitle>
+      </Tab>
 
       {!isRunningInElectron() && (
         <>

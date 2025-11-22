@@ -1,5 +1,5 @@
 export const tokensToNotes = (tokens: string, notesOffset: number) => {
-  const tokenLines = tokens.split('\n').map((line: string) => line.trim()).filter(Boolean);
+  const tokenLines = tokens.split(',').map((line: string) => line.trim()).filter(Boolean);
   const events: any[] = [];
   for (const line of tokenLines) {
     // Example event formats:

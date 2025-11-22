@@ -5,9 +5,9 @@ import { emptyTrack, isNoteEvent, programChangeMidiEvent } from "@signal-app/cor
 import { usePianoRoll } from "../hooks/usePianoRoll"
 import { notesToTokens, tokensToNotes } from "../utils/tokens";
 
-export const useGenerateNotes = () => {
+export const useGenerateNotes = ({ onSuccess }: { onSuccess?: (explanation: string) => void } = {}) => {
   const { tracks } = useSong();
-  const { setCandidateNotes, selectedTrack } = usePianoRoll();
+  const { setCandidateNotes, selectedTrack, setAiExplanation } = usePianoRoll();
   const selectedTrackRef = useRef(selectedTrack);
   selectedTrackRef.current = selectedTrack;
 
@@ -34,10 +34,14 @@ export const useGenerateNotes = () => {
     console.log(result);
 
     setTimeout(async () => {
-      checkMidiResponseReady(result.id, selectedTrack, (notes: any[]) => {
+      checkMidiResponseReady(result.id, selectedTrack, (notes: any[], explanation: string) => {
         setIsLoading(false);
         setIsSuccess(true);
         setCandidateNotes(notes);
+        setAiExplanation(explanation);
+        if (onSuccess) {
+          onSuccess(explanation);
+        }
       });
     }, 1000);
 
@@ -50,7 +54,7 @@ export const useGenerateNotes = () => {
   };
 }
 
-async function checkMidiResponseReady(id: string, selectedTrack: any, setCandidateNotes: (notes: any[]) => void) {
+async function checkMidiResponseReady(id: string, selectedTrack: any, setCandidateNotes: (notes: any[], explanation: string) => void) {
   const result = await getMidiResponse(id);
   console.log(result);
 
@@ -69,7 +73,7 @@ async function checkMidiResponseReady(id: string, selectedTrack: any, setCandida
     }
 
     const candidateNotes = tokensToNotes(result.tokens, lastNoteEnd)
-    setCandidateNotes(candidateNotes);
+    setCandidateNotes(candidateNotes, result.explanation);
     return result.tokens;
   }
   setTimeout(() => {
@@ -114,7 +118,7 @@ export const useGenerateAccompaniment = ({ onSuccess }: { onSuccess: () => void 
           const programChangeEvent: any = programChangeMidiEvent(0, channel, instrument);
           programChangeEvent.tick = 0;
           newTrack.addEvents([programChangeEvent]);
-          
+
           const notes = tokensToNotes(tokens, 0);
 
           newTrack.addEvents(notes);

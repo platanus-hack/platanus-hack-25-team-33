@@ -24,6 +24,8 @@ import { TransportPanel } from "../TransportPanel/TransportPanel"
 import { DeleteAccountDialog } from "../UserSettingsDialog/DeleteAccountDialog"
 import { UserSettingsDialog } from "../UserSettingsDialog/UserSettingsDialog"
 import { DropZone } from "./DropZone"
+import { AISidebar } from "../AISidebar/AISidebar"
+import { useRootView } from "../../hooks/useRootView"
 
 const Container = styled.div`
   height: 100%;
@@ -31,6 +33,14 @@ const Container = styled.div`
   flex-direction: column;
   flex-grow: 1;
   overflow: hidden;
+`
+
+const MainContent = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  overflow: hidden;
+  height: 100%;
 `
 
 const Column = styled.div`
@@ -54,6 +64,7 @@ const Routes: FC = () => {
 
 export const RootView: FC = () => {
   const keyboardShortcutProps = useGlobalKeyboardShortcut()
+  const { openAISidebar } = useRootView()
   useDisableZoom()
   useDisableBounceScroll()
   useDisableBrowserContextMenu()
@@ -63,11 +74,14 @@ export const RootView: FC = () => {
       <DropZone>
         <Column {...keyboardShortcutProps} tabIndex={0}>
           <Navigation />
-          <Container>
-            <Routes />
-            <TransportPanel />
-            <BuildInfo />
-          </Container>
+          <MainContent>
+            <Container>
+              <Routes />
+              <TransportPanel />
+              <BuildInfo />
+            </Container>
+            {openAISidebar && <AISidebar />}
+          </MainContent>
         </Column>
       </DropZone>
       <HelpDialog />

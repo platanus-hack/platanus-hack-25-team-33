@@ -280,6 +280,8 @@ export function usePianoRoll() {
     restoreState: useSetAtom(restoreAtom, { store }),
     candidateNotes: useAtomValue(candidateNotesAtom, { store }),
     setCandidateNotes: useSetAtom(candidateNotesAtom, { store }),
+    aiExplanation: useAtomValue(aiExplanationAtom, { store }),
+    setAiExplanation: useSetAtom(aiExplanationAtom, { store }),
   }
 }
 
@@ -307,6 +309,7 @@ const openVelocityDialogAtom = atom<boolean>(false)
 const previewingNoteNumbersAtom = atom<ReadonlySet<number>>(new Set<number>())
 const activePaneAtom = atom<"notes" | "control" | null>(null)
 const candidateNotesAtom = atom<any[]>([])
+const aiExplanationAtom = atom<string>("")
 
 // actions
 const resetSelectionAtom = atom(null, (_get, set) => {

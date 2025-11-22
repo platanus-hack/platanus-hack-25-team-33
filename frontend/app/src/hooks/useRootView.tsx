@@ -32,6 +32,9 @@ export function useRootView() {
     get openDeleteAccountDialog() {
       return useAtomValue(openDeleteAccountDialogAtom)
     },
+    get openAISidebar() {
+      return useAtomValue(openAISidebarAtom)
+    },
     setOpenHelpDialog: useSetAtom(openHelpAtom),
     setOpenSignInDialog: useSetAtom(openSignInDialogAtom),
     setOpenCloudFileDialog: useSetAtom(openCloudFileDialogAtom),
@@ -42,6 +45,7 @@ export function useRootView() {
     setOpenPublishDialog: useSetAtom(openPublishDialogAtom),
     setOpenUserSettingsDialog: useSetAtom(openUserSettingsDialogAtom),
     setOpenDeleteAccountDialog: useSetAtom(openDeleteAccountDialogAtom),
+    setOpenAISidebar: useSetAtom(openAISidebarAtom),
   }
 }
 
@@ -56,3 +60,4 @@ const openInitializeErrorDialogAtom = atom<boolean>(false)
 const openPublishDialogAtom = atom<boolean>(false)
 const openUserSettingsDialogAtom = atom<boolean>(false)
 const openDeleteAccountDialogAtom = atom<boolean>(false)
+const openAISidebarAtom = atom<boolean>(false)
