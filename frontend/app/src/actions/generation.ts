@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import { useSong } from "../hooks/useSong"
 import { completeMidi, getMidiResponse } from "../services/AiService";
 import { isNoteEvent, NoteEvent } from "@signal-app/core";
@@ -8,17 +8,18 @@ import { notesToTokens, tokensToNotes } from "../utils/tokens";
 
 export const useGenerateNotes = () => {
   const { tracks } = useSong();
-  const { setCandidateNotes } = usePianoRoll();
+  const { setCandidateNotes, selectedTrack } = usePianoRoll();
+  const selectedTrackRef = useRef(selectedTrack);
+  selectedTrackRef.current = selectedTrack;
 
   const generateNotes = useCallback(async () => {
     // Use track 1 as in the example (A3, E4, etc. are typically not in track 0/metronome/drums)
     if (tracks.length < 2) return;
 
-    const currentTrack = tracks[1];
-    if (!currentTrack) return;
+    if (!selectedTrack) return;
 
     // Select MIDI notes on this track
-    const notes = currentTrack.events.filter(isNoteEvent);
+    const notes = selectedTrack.events.filter(isNoteEvent);
 
     const tokens = notesToTokens(notes)
 
@@ -26,17 +27,17 @@ export const useGenerateNotes = () => {
     console.log(resultStr);
 
     setTimeout(async () => {
-      checkResponseReady(resultStr.id, currentTrack, setCandidateNotes);
+      checkResponseReady(resultStr.id, () => selectedTrackRef.current, setCandidateNotes);
     }, 1000);
 
-  }, [tracks]);
+  }, [tracks, selectedTrack]);
 
   return {
     generateNotes,
   };
 }
 
-async function checkResponseReady(id: string, currentTrack: any, setCandidateNotes: (notes: any[]) => void) {
+async function checkResponseReady(id: string, getSelectedTrack: () => any, setCandidateNotes: (notes: any[]) => void) {
   const result = await getMidiResponse(id);
   console.log(result);
 
@@ -44,9 +45,10 @@ async function checkResponseReady(id: string, currentTrack: any, setCandidateNot
     console.log(result.tokens);
 
     let lastNoteEnd = 0;
+    const selectedTrack = getSelectedTrack();
 
-    if (currentTrack && Array.isArray(currentTrack.events)) {
-      for (const event of currentTrack.events) {
+    if (selectedTrack && Array.isArray(selectedTrack.events)) {
+      for (const event of selectedTrack.events) {
         if (isNoteEvent(event)) {
           const end = event.tick + event.duration;
           if (end > lastNoteEnd) {
@@ -62,7 +64,7 @@ async function checkResponseReady(id: string, currentTrack: any, setCandidateNot
     return result.tokens;
   }
   setTimeout(() => {
-    checkResponseReady(id, currentTrack, setCandidateNotes);
+    checkResponseReady(id, getSelectedTrack, setCandidateNotes);
   }, 1000);
 }
 
