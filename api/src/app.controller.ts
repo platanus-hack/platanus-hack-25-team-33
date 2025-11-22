@@ -5,10 +5,17 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Post('generateMidi')
-  generateMidi(@Body() body: { midiPath: string; timebase: number }): void {
+  @Post('completeMidi')
+  completeMidi(@Body() body: { midiPath: string; timebase: number }): void {
     console.log(body);
     const { midiPath, timebase } = body;
-    this.appService.generateMidi(midiPath, timebase);
+    this.appService.completeMidi(midiPath, timebase);
+  }
+
+  @Post('generateMidi')
+  generateMidi(@Body() body: { prompt: string }): void {
+    console.log(body);
+    const { prompt } = body;
+    this.appService.generateMidi(prompt);
   }
 }

@@ -6,7 +6,7 @@ import { CreateResponseCommand } from './commands/create-response.command';
 export class AppService {
   constructor(private readonly midiTokenProcessor: MidiTokenProcessor) {}
 
-  async generateMidi(midiPath: string, timebase: number): Promise<void> {
+  async completeMidi(midiPath: string, timebase: number): Promise<void> {
     const createResponse = new CreateResponseCommand();
     const inputTokens = this.midiTokenProcessor.midiToTokens(
       midiPath,
@@ -38,7 +38,40 @@ export class AppService {
     return this.midiTokenProcessor.processMidiFile(response);
   }
 
-  // completeMidi(): string {
-  //   return 'Hello World!';
-  // }
+  async generateMidi(input: string): Promise<void> {
+    const createResponse = new CreateResponseCommand();
+    const instructions = `You are an AI music composer. The user will provide a natural-language description of a musical idea, such as a melody, mood, style, tempo, rhythm, or harmonic feel.
+
+Your task is to compose a complete piece of music based on the user's description and output it as a sequence of structured MIDI-like tokens.
+
+You MUST generate music that is coherent, stylistically consistent, and musically meaningful. Follow the user’s intent regarding genre, mood, tempo, complexity, scale, and instrumentation as closely as possible. If the user specifies no musical constraints, choose reasonable defaults.
+
+The output MUST follow this exact token format:
+
+- TEMPO [bpm]
+- TIMEBASE [timebase]
+- NOTE_ON [note] VELOCITY [velocity]
+- NOTE_START [startTime]
+- NOTE_END [endTime]
+- TIME_SHIFT [shiftTime]
+- NOTE_OFF [note]
+
+Rules:
+- Output ONLY valid tokens in this format, nothing else.
+- All notes must include NOTE_ON, NOTE_START, NOTE_END, and NOTE_OFF in the correct order.
+- Time values must be consistent, non-negative, and increasing.
+- Always begin with TEMPO and TIMEBASE.
+- Melody, rhythm, scale, and harmony must reflect the user's description.
+- Ensure the piece is complete, structured, and musically coherent.
+- Avoid text explanations or comments. Only output the tokens.`;
+
+    const response = await createResponse.execute({
+      model: 'gpt-5-nano',
+      input,
+      instructions,
+    });
+
+    console.log('RESPONSE: ' + response);
+    return this.midiTokenProcessor.processMidiFile(response);
+  }
 }
