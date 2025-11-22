@@ -1,8 +1,8 @@
 import styled from "@emotion/styled"
-import Add from "mdi-react/AddIcon"
-import { FC } from "react"
+import { FC, useState } from "react"
 import { useAddTrack } from "../../actions"
-import { Localized } from "../../localize/useLocalization"
+import { Dialog, DialogContent, DialogTitle, DialogActions } from "../../components/Dialog/Dialog"
+import { Button, PrimaryButton } from "../ui/Button"
 
 const Wrapper = styled.div`
   display: flex;
@@ -12,6 +12,7 @@ const Wrapper = styled.div`
   color: var(--color-text-secondary);
   border-radius: 0.5rem;
   margin: 0.5rem;
+  cursor: pointer;
 
   &:hover {
     background: var(--color-highlight);
@@ -24,12 +25,35 @@ const Label = styled.div`
 
 export const GenerateTrackButton: FC = () => {
   const addTrack = useAddTrack()
+  const [open, setOpen] = useState(false)
 
   return (
-    <Wrapper>
-      <Label>
-        Generate track
-      </Label>
-    </Wrapper>
+    <div>
+      <Wrapper>
+        <Label onClick={() => setOpen(true)}>
+          Generate track
+        </Label>
+      </Wrapper>
+
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+        >
+        <DialogTitle>
+          Generar track
+        </DialogTitle>
+        <DialogContent>
+          Hola
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <PrimaryButton>
+            Generar
+          </PrimaryButton>
+        </DialogActions>
+      </Dialog>
+    </div>
   )
 }
