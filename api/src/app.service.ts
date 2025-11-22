@@ -1,19 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-// import { MidiTokenProcessor } from './utils';
 import { CreateResponseCommand } from './commands/create-response.command';
 import { Job, JobStatus } from './types';
 
 @Injectable()
 export class AppService {
   private responses: Record<string, Job> = {};
-  constructor(
-    // private readonly midiTokenProcessor: MidiTokenProcessor
-  ) {}
+  constructor() { }
 
   completeMidi(tokens: string, model?: string, measure?: number): Job {
     const generatedResponseId: string = this.generateId();
     console.log('Generating response for tokens:', tokens);
-    // this.midiTokenProcessor.midiToTokens(tokens, 480);
     const instructions = `Please extend the piece with additional notes, ensuring that the rhythmic structure is varied and the harmony and progression stay consistent with the key and mode of the original piece. The melody should flow naturally and maintain musical cohesion with the existing material.
 
 ### Specific Instructions:
@@ -39,8 +35,8 @@ Please provide the extended music in the same token format:
 
     const response: Job = {
       id: generatedResponseId,
-      status: JobStatus.PENDING
-    }
+      status: JobStatus.PENDING,
+    };
 
     this.responses[generatedResponseId] = response;
 
@@ -53,8 +49,8 @@ Please provide the extended music in the same token format:
     if (!response) {
       throw new NotFoundException(`Job ${id} not found`);
     }
-  
-    return response
+
+    return response;
   }
 
   generateMidi(input: string): Job {
@@ -88,7 +84,56 @@ Rules:
 
     const response: Job = {
       id: generatedResponseId,
-      status: JobStatus.PENDING
+      status: JobStatus.PENDING,
+    };
+
+    this.responses[generatedResponseId] = response;
+
+    return response;
+  }
+
+  generateAccompanimentMidi(
+    tokens: string,
+    prompt: string,
+    instrument: string = 'piano',
+    model?: string,
+  ): Job {
+    const generatedResponseId: string = this.generateId();
+    console.log('Generating response for tokens:', tokens);
+    const instructions = `
+You are an AI music arranger. The user will provide a MIDI sequence that may contain one or more instruments such as guitar, piano, strings, synths, or percussion.
+
+Your task is to analyze the harmony, rhythm, timing, structure, and musical style of the input MIDI, and compose a new part for the target instrument: ${instrument}.
+
+Guidelines:
+- Follow the key, mode, harmonic progression, rhythmic feel, and style implied by the input MIDI.
+- The generated ${instrument} part must fit musically with the existing material.
+- Use writing techniques appropriate for ${instrument} (e.g., voicing, register, patterns, articulations, rhythmic behavior).
+- The output must be coherent, expressive, and stylistically appropriate to the overall musical context.
+- Do NOT rewrite or modify the original MIDI. Only generate the new instrumental part.
+- Respect the original tempo and timebase when generating events.
+
+Output format (required):
+- NOTE_ON [note] VELOCITY [velocity]
+- NOTE_START [startTime]
+- NOTE_END [endTime]
+- NOTE_OFF [note]
+- TIME_SHIFT [shiftTime]
+
+Output ONLY the token sequence representing the ${instrument} part. Do not include explanations, comments, or any text outside the token format.
+`;
+
+    const input = `The user has provided the following melody or musical idea in token format:
+${tokens}
+--
+${prompt}
+`;
+
+    void this.generateResponse(generatedResponseId, input, instructions, model);
+
+    const response: Job = {
+      id: generatedResponseId,
+      status: JobStatus.PENDING,
     };
 
     this.responses[generatedResponseId] = response;
@@ -116,11 +161,11 @@ Rules:
       'Took ' + timeInMinutes.toFixed(2) + ' minutes to generate the response.',
     );
     console.log(generatedResponseId);
-    
+
     this.responses[generatedResponseId] = {
       id: generatedResponseId,
       status: JobStatus.COMPLETED,
-      tokens: response
+      tokens: response,
     };
   }
 

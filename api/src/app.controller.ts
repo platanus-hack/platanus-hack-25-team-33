@@ -29,4 +29,16 @@ export class AppController {
     const { prompt } = body;
     return this.appService.generateMidi(prompt);
   }
+
+  @Post('generateAccompanimentMidi')
+  generateAccompanimentMidi(
+    @Body() body: { prompt: string; tokens: string; instrument: string },
+  ): Job {
+    const { prompt, tokens, instrument } = body;
+    return this.appService.generateAccompanimentMidi(
+      prompt,
+      tokens,
+      instrument,
+    );
+  }
 }
