@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react"
 import { useSong } from "../hooks/useSong"
 import { completeMidi, generateAccompanimentMidi, getMidiResponse } from "../services/AiService";
-import { emptyTrack, isNoteEvent, NoteEvent, Track } from "@signal-app/core";
+import { emptyTrack, isNoteEvent, programChangeMidiEvent } from "@signal-app/core";
 import { usePianoRoll } from "../hooks/usePianoRoll"
 import { notesToTokens, tokensToNotes } from "../utils/tokens";
 
@@ -18,14 +18,16 @@ export const useGenerateNotes = () => {
     setIsLoading(true);
     setIsSuccess(false);
 
-    // Use track 1 as in the example (A3, E4, etc. are typically not in track 0/metronome/drums)
-    if (tracks.length < 2) return;
+    if (tracks.length < 2) {
+      setIsLoading(false);
+      return;
+    }
+    if (!selectedTrack) {
+      setIsLoading(false);
+      return;
+    }
 
-    if (!selectedTrack) return;
-
-    // Select MIDI notes on this track
     const notes = selectedTrack.events.filter(isNoteEvent);
-
     const tokens = notesToTokens(notes)
 
     const result = await completeMidi(tokens, instrument);
@@ -39,7 +41,7 @@ export const useGenerateNotes = () => {
       });
     }, 1000);
 
-  }, [tracks, selectedTrack]);
+  }, [tracks, selectedTrack, setCandidateNotes]);
 
   return {
     generateNotes,
@@ -53,8 +55,6 @@ async function checkMidiResponseReady(id: string, selectedTrack: any, setCandida
   console.log(result);
 
   if (result.status === "completed") {
-    console.log(result.tokens);
-
     let lastNoteEnd = 0;
 
     if (selectedTrack && Array.isArray(selectedTrack.events)) {
@@ -70,7 +70,6 @@ async function checkMidiResponseReady(id: string, selectedTrack: any, setCandida
 
     const candidateNotes = tokensToNotes(result.tokens, lastNoteEnd)
     setCandidateNotes(candidateNotes);
-
     return result.tokens;
   }
   setTimeout(() => {
@@ -80,33 +79,59 @@ async function checkMidiResponseReady(id: string, selectedTrack: any, setCandida
 
 export const useGenerateAccompaniment = ({ onSuccess }: { onSuccess: () => void }) => {
   const { tracks, addTrack } = useSong();
-  const lastTrackRef = useRef(tracks[tracks.length - 1]);
-  lastTrackRef.current = tracks[tracks.length - 1];
+  const lastTrackRef = useRef(tracks[tracks.length - 1] || null);
+  lastTrackRef.current = tracks[tracks.length - 1] || null;
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const generateAccompaniment = useCallback(async (prompt: string, tokens: string, instrument: string) => {
+  // REWRITE: fix to actually add track with correct instrument (program number)
+  const generateAccompaniment = useCallback(async (prompt: string, tokens: string, instrumentName: string, instrument: number) => {
     setIsLoading(true);
     setIsSuccess(false);
 
-    const result = await generateAccompanimentMidi(prompt, tokens, instrument);
-    console.log(result);
+    try {
+      const result = await generateAccompanimentMidi(prompt, tokens, instrumentName);
+      console.log(result);
 
-    setTimeout(async () => {
-      checkAccompanimentResponseReady(result.id, (tokens: string) => {
-        const newTrack = emptyTrack(0)
-        const notes = tokensToNotes(tokens, 0)
-        console.log('notes: ', notes)
-        newTrack.addEvents(notes)
-        addTrack(newTrack)
+      setTimeout(async () => {
+        checkAccompanimentResponseReady(result.id, (tokens: string) => {
+          // Assign a channel that is not 9 (drums) if possible, and not used
+          // We'll keep it simple: find the next unused channel
+          const usedChannels = tracks.map(t => t.channel).filter(n => typeof n === "number");
+          let channel = 0;
+          for (let i = 0; i < 16; i++) {
+            if (!usedChannels.includes(i) && i !== 9) {
+              channel = i;
+              break;
+            }
+          }
 
-        setIsLoading(false);
-        setIsSuccess(true);
-        onSuccess()
-      })
-    }, 1000);
-  }, []);
+          const newTrack = emptyTrack(channel);
+          newTrack.channel = channel;
+
+          // Fix: add the correct instrument (program change event) at start of this track
+          const programChangeEvent: any = programChangeMidiEvent(0, channel, instrument);
+          programChangeEvent.tick = 0;
+          newTrack.addEvents([programChangeEvent]);
+          
+          const notes = tokensToNotes(tokens, 0);
+
+          newTrack.addEvents(notes);
+          addTrack(newTrack);
+
+          setIsLoading(false);
+          setIsSuccess(true);
+          onSuccess();
+        })
+      }, 1000);
+    } catch (err) {
+      setIsLoading(false);
+      setIsSuccess(false);
+      // Optionally handle errors
+      console.error(err);
+    }
+  }, [tracks, addTrack, onSuccess]);
 
   return {
     generateAccompaniment,
@@ -115,14 +140,12 @@ export const useGenerateAccompaniment = ({ onSuccess }: { onSuccess: () => void 
   };
 }
 
-
 async function checkAccompanimentResponseReady(id: string, onSuccess: (result: string) => void) {
   const result = await getMidiResponse(id);
   console.log(result);
 
   if (result.status === "completed") {
-    console.log(result.tokens);
-    onSuccess(result.tokens)
+    onSuccess(result.tokens);
   } else {
     setTimeout(() => {
       checkAccompanimentResponseReady(id, onSuccess);
