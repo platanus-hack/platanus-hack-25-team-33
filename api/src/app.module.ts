@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { MidiTokenProcessor } from './utils';
+import { PromptService } from './prompt.service';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { MidiTokenProcessor } from './utils';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, MidiTokenProcessor],
+  providers: [AppService, MidiTokenProcessor, PromptService],
 })
 export class AppModule {}

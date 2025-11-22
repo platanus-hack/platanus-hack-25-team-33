@@ -16,7 +16,7 @@ export class AppController {
     },
   ): Job {
     const { tokens, model, measure } = body;
-    return this.appService.completeMidi(tokens, model, measure);
+    return this.appService.completeMidi(tokens, measure ?? 1, model);
   }
 
   @Get('/token/:id')
