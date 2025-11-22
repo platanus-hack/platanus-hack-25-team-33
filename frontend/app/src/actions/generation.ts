@@ -12,7 +12,7 @@ export const useGenerateNotes = () => {
   const selectedTrackRef = useRef(selectedTrack);
   selectedTrackRef.current = selectedTrack;
 
-  const generateNotes = useCallback(async () => {
+  const generateNotes = useCallback(async (instrument: string) => {
     // Use track 1 as in the example (A3, E4, etc. are typically not in track 0/metronome/drums)
     if (tracks.length < 2) return;
 
@@ -23,7 +23,7 @@ export const useGenerateNotes = () => {
 
     const tokens = notesToTokens(notes)
 
-    const resultStr = await completeMidi(tokens);
+    const resultStr = await completeMidi(tokens, instrument);
     console.log(resultStr);
 
     setTimeout(async () => {

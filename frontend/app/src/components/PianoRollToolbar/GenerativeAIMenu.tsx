@@ -1,6 +1,9 @@
 import styled from "@emotion/styled"
 import { PrimaryButton } from "../ui/Button"
 import { useGenerateNotes } from "../../actions/generation"
+import { useInstrumentBrowser } from "../../hooks/useInstrumentBrowser"
+import { InstrumentName } from "../TrackList/InstrumentName"
+import ReactDOMServer from 'react-dom/server';
 
 const Container = styled.div`
   display: flex;
@@ -9,9 +12,15 @@ const Container = styled.div`
 
 export const GenerativeAIMenu = () => {
   const { generateNotes } = useGenerateNotes()
+  const { setting } = useInstrumentBrowser()
+
+  const selectedInstrumentName = ReactDOMServer.renderToString(
+    <InstrumentName {...setting} />
+  );
+
   return (
     <Container>
-      <PrimaryButton onClick={generateNotes}>
+      <PrimaryButton onClick={() => generateNotes(selectedInstrumentName)}>
         Generate notes
       </PrimaryButton>
     </Container>

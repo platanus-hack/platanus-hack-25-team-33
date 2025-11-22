@@ -1,9 +1,9 @@
 const apiUrl = 'http://localhost:8080'
 
-export const completeMidi = async (tokens: string) => {
+export const completeMidi = async (tokens: string, instrument: string) => {
   const response = await fetch(`${apiUrl}/completeMidi`, {
     method: 'POST',
-    body: JSON.stringify({ tokens }),
+    body: JSON.stringify({ tokens, instrument }),
     headers: {
       'Content-Type': 'application/json',
     },
