@@ -80,7 +80,7 @@ function PianoRollProviderInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setSelectedTrackId(
       songStore.song.tracks.find((t) => !t.isConductorTrack)?.id ??
-        UNASSIGNED_TRACK_ID,
+      UNASSIGNED_TRACK_ID,
     )
   }, [setSelectedTrackId, songStore])
 
@@ -278,6 +278,8 @@ export function usePianoRoll() {
     setActivePane: useSetAtom(activePaneAtom, { store }),
     serializeState: useSetAtom(serializeAtom, { store }),
     restoreState: useSetAtom(restoreAtom, { store }),
+    candidateNotes: useAtomValue(candidateNotesAtom, { store }),
+    setCandidateNotes: useSetAtom(candidateNotesAtom, { store }),
   }
 }
 
@@ -304,6 +306,7 @@ const openTransposeDialogAtom = atom<boolean>(false)
 const openVelocityDialogAtom = atom<boolean>(false)
 const previewingNoteNumbersAtom = atom<ReadonlySet<number>>(new Set<number>())
 const activePaneAtom = atom<"notes" | "control" | null>(null)
+const candidateNotesAtom = atom<any[]>([])
 
 // actions
 const resetSelectionAtom = atom(null, (_get, set) => {

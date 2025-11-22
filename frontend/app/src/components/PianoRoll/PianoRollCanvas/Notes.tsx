@@ -44,23 +44,47 @@ export const NotesContent: FC<NotesContentProps> = (props) => {
 }
 
 const _Notes: FC<NotesContentProps> = ({ zIndex, notes }) => {
-  const { selectedTrackId } = usePianoRoll()
+  const { selectedTrackId, candidateNotes, transform } = usePianoRoll()
   const { isRhythmTrack } = useTrack(selectedTrackId)
   const { borderColor, inactiveColor, activeColor, selectedColor } =
     useNoteColor()
   const { showNoteLabels } = useSettings()
 
+  const candidateRects = candidateNotes.map((e, i) => {
+    const rect = isRhythmTrack ? transform.getDrumRect(e) : transform.getRect(e)
+
+    return {
+      ...rect,
+      id: -i - 1,
+      velocity: e.velocity,
+      noteNumber: e.noteNumber,
+      isSelected: false
+    }
+  })
+
+  const candidateColor = [activeColor[0], activeColor[1], activeColor[2], 0.05] as [number, number, number, number]
+
   return (
     <>
       {isRhythmTrack && (
-        <NoteCircles
-          strokeColor={borderColor}
-          rects={notes}
-          inactiveColor={inactiveColor}
-          activeColor={activeColor}
-          selectedColor={selectedColor}
-          zIndex={zIndex}
-        />
+        <>
+          <NoteCircles
+            strokeColor={borderColor}
+            rects={notes}
+            inactiveColor={inactiveColor}
+            activeColor={activeColor}
+            selectedColor={selectedColor}
+            zIndex={zIndex}
+          />
+          <NoteCircles
+            strokeColor={borderColor}
+            rects={candidateRects}
+            inactiveColor={candidateColor}
+            activeColor={candidateColor}
+            selectedColor={candidateColor}
+            zIndex={zIndex}
+          />
+        </>
       )}
       {!isRhythmTrack && (
         <>
@@ -70,6 +94,14 @@ const _Notes: FC<NotesContentProps> = ({ zIndex, notes }) => {
             activeColor={activeColor}
             selectedColor={selectedColor}
             rects={notes}
+            zIndex={zIndex + 0.1}
+          />
+          <NoteRectangles
+            strokeColor={borderColor}
+            inactiveColor={candidateColor}
+            activeColor={candidateColor}
+            selectedColor={candidateColor}
+            rects={candidateRects}
             zIndex={zIndex + 0.1}
           />
           {showNoteLabels && <NoteLabels rects={notes} zIndex={zIndex + 0.2} />}

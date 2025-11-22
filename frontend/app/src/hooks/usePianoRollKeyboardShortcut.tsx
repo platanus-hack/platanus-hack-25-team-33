@@ -10,10 +10,13 @@ import {
 import { useKeyboardShortcut } from "./useKeyboardShortcut"
 import { usePianoRoll } from "./usePianoRoll"
 
+import { useTrack } from "./useTrack"
+
 const SCROLL_DELTA = 24
 
 export const usePianoRollKeyboardShortcut = () => {
-  const { setMouseMode, scrollBy } = usePianoRoll()
+  const { setMouseMode, scrollBy, candidateNotes, setCandidateNotes, selectedTrackId } = usePianoRoll()
+  const { addEvents } = useTrack(selectedTrackId)
   const selectAllNotes = useSelectAllNotes()
   const nextTrack = useNextTrack()
   const previousTrack = usePreviousTrack()
@@ -66,6 +69,16 @@ export const usePianoRollKeyboardShortcut = () => {
       { code: "KeyM", run: toggleMute },
       // Toggle ghost (,)
       { code: "Comma", run: toggleGhost },
+      // Commit candidate notes (Tab)
+      {
+        code: "Tab",
+        run: () => {
+          if (candidateNotes.length > 0) {
+            addEvents(candidateNotes)
+            setCandidateNotes([])
+          }
+        },
+      },
     ],
     [
       scrollBy,
@@ -76,6 +89,9 @@ export const usePianoRollKeyboardShortcut = () => {
       toggleSolo,
       toggleMute,
       toggleGhost,
+      candidateNotes,
+      addEvents,
+      setCandidateNotes,
     ],
   )
 

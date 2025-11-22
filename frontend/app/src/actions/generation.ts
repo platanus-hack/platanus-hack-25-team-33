@@ -3,6 +3,8 @@ import { useSong } from "../hooks/useSong"
 import { completeMidi, getMidiResponse } from "../services/AiService";
 import { isNoteEvent, NoteEvent } from "@signal-app/core";
 
+import { usePianoRoll } from "../hooks/usePianoRoll"
+
 // Helper to convert MIDI number to pitch name, e.g. 60 → C4
 function midiToPitchName(n: number): string {
   const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -12,6 +14,7 @@ function midiToPitchName(n: number): string {
 
 export const useGenerateNotes = () => {
   const { tracks } = useSong();
+  const { setCandidateNotes } = usePianoRoll();
 
   const generateNotes = useCallback(async () => {
     // Use track 1 as in the example (A3, E4, etc. are typically not in track 0/metronome/drums)
@@ -65,7 +68,7 @@ export const useGenerateNotes = () => {
     console.log(resultStr);
 
     setTimeout(async () => {
-      checkResponseReady(resultStr.id, currentTrack);
+      checkResponseReady(resultStr.id, currentTrack, setCandidateNotes);
     }, 1000);
 
   }, [tracks]);
@@ -75,7 +78,7 @@ export const useGenerateNotes = () => {
   };
 }
 
-async function checkResponseReady(id: string, currentTrack: any) {
+async function checkResponseReady(id: string, currentTrack: any, setCandidateNotes: (notes: any[]) => void) {
   const result = await getMidiResponse(id);
   console.log(result);
 
@@ -147,6 +150,7 @@ async function checkResponseReady(id: string, currentTrack: any) {
     // Process events to create notes
     let currentTick = 0;
     const activeNotes: Record<string, { start: number, velocity: number }> = {};
+    const candidateNotes: any[] = [];
 
     for (const event of events) {
       switch (event.type) {
@@ -162,16 +166,14 @@ async function checkResponseReady(id: string, currentTrack: any) {
             const duration = currentTick - active.start;
             const noteNumber = pitchNameToMidi(event.note);
 
-            if (currentTrack && typeof currentTrack.addEvent === 'function') {
-              currentTrack.addEvent({
-                type: "channel",
-                subtype: "note",
-                noteNumber: noteNumber,
-                tick: lastNoteEnd + active.start,
-                velocity: active.velocity,
-                duration: duration
-              });
-            }
+            candidateNotes.push({
+              type: "channel",
+              subtype: "note",
+              noteNumber: noteNumber,
+              tick: lastNoteEnd + active.start,
+              velocity: active.velocity,
+              duration: duration
+            });
 
             delete activeNotes[event.note];
           }
@@ -179,10 +181,12 @@ async function checkResponseReady(id: string, currentTrack: any) {
       }
     }
 
+    setCandidateNotes(candidateNotes);
+
     return result.tokens;
   }
   setTimeout(() => {
-    checkResponseReady(id, currentTrack);
+    checkResponseReady(id, currentTrack, setCandidateNotes);
   }, 1000);
 }
 
