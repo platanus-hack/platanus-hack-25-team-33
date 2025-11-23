@@ -1,4 +1,5 @@
 {
   "project-name": "MIDIA",
-  "project-description-spanish": "Editor de música asistido por IA que potencia la creación musical del artista."
+  "project-description-spanish": "Editor de música asistido por IA que potencia la creación musical del artista.",
+  "deploy-url": "https://test-hack-plt-33.s3.us-west-1.amazonaws.com/edit.html"
 }
